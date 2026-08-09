@@ -4,7 +4,7 @@
 
 ### Fixed
 - Claude: avoid a nested refresh TaskLocal binding during post-delegation credential reloads, preventing a Sonoma 14.4
-  `swift_task_dealloc` abort while preserving the fresh Keychain-prompt coalescing epoch.
+  `swift_task_dealloc` abort while keeping stale prompt failures out of the fresh retry epoch.
 
 ## 0.48.1 — 2026-08-07
 
