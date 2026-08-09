@@ -2,6 +2,10 @@
 
 ## 0.48.1-fork — 2026-08-09
 
+### Changed
+- Overview: preserve CodexBar's native theme while replacing rich dashboard cards with compact per-provider quota
+  meters; spend, token, project, session, storage, and diagnostic detail remains in provider tabs.
+
 ### Fixed
 - Claude: avoid a nested refresh TaskLocal binding during post-delegation credential reloads, preventing a Sonoma 14.4
   `swift_task_dealloc` abort while keeping stale prompt failures out of the fresh retry epoch.

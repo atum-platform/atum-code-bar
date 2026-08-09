@@ -8,9 +8,28 @@ read_when:
 
 # Minimal limits monitor
 
-This fork keeps the first version deliberately small: use CodexBar's existing provider collectors and display editor,
-fix the observed Sonoma refresh crash, and expose routing advice through the existing CLI contract. It does not add a
-second policy engine or duplicate provider-fetch logic.
+This fork keeps CodexBar's existing visual theme and provider collectors while making the opened **Overview** tab a
+true quick glance: each selected source shows its name and up to three primary quota meters with their reset times.
+Cost charts, token histories, projects, conversations, storage, and verbose diagnostics stay out of
+Overview and remain available in the individual provider tabs. Clicking an Overview row opens that provider's detail
+tab.
+
+The fork also fixes the observed Sonoma refresh crash and exposes routing advice through the existing CLI contract. It
+does not add a second policy engine or duplicate provider-fetch logic.
+
+## Compact Overview
+
+The Overview tab intentionally reuses CodexBar's standard typography, provider tint, progress bar, spacing primitives,
+and native menu selection. It changes content hierarchy rather than introducing a new theme:
+
+- one compact row per selected provider;
+- up to three primary quota windows shown as meter bars;
+- percentage and window label on the left, reset countdown on the right;
+- a one-line unavailable or refreshing state when no meter can be shown;
+- no embedded dashboard or hover submenu in the quick-glance view.
+
+Use the existing provider tabs for account identity, diagnostics, spend, token history, projects, conversations,
+storage, and other secondary data.
 
 ## Low-noise menu bar setup
 
@@ -28,8 +47,8 @@ second policy engine or duplicate provider-fetch logic.
 6. Select **Small** and **Tight** for the least menu-bar space. Leave cost and pace tokens out of the layout.
 
 `Auto %` selects the provider's most useful active quota window. Turn off **Show usage as used** when the percentage
-should mean remaining allowance. The layout editor changes the always-visible status item; the opened provider card
-still shows all available quota windows so detail is available on demand.
+should mean remaining allowance. The layout editor changes the always-visible status item; the opened Overview tab
+shows all available quota windows in compact rows, while provider tabs retain the full detail.
 
 ## Machine-readable quota gate
 
@@ -97,5 +116,6 @@ Acceptance requires:
   refresh path;
 - no fresh `CodexBar-*.ips` report and no `swift_task_dealloc` abort after repeated refreshes.
 
-The crash fix is suitable for upstream contribution. The minimal layout and provider-routing policy should stay as
-configuration/documentation unless repeated use shows that a dedicated UI preset or CLI policy command is warranted.
+The crash fix is suitable for upstream contribution. The compact Overview is a fork-specific product choice; the
+provider-routing policy should stay outside the app unless repeated use shows that a dedicated policy command is
+warranted.

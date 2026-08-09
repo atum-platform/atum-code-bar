@@ -40,6 +40,11 @@ jobs:
       - name: Test Claude prompt coalescing
         run: swift test --filter ClaudeOAuthPromptCoalescingTests
 
+      - name: Test compact Overview rows
+        run: |
+          swift test --filter OverviewMenuCardRowViewTests
+          swift test --filter "compact overview omits"
+
       - name: Package ad-hoc app
         env:
           CODEXBAR_SIGNING: adhoc
