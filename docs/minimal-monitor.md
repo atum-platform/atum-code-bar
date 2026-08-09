@@ -17,6 +17,12 @@ tab.
 The fork also fixes the observed Sonoma refresh crash and exposes routing advice through the existing CLI contract. It
 does not add a second policy engine or duplicate provider-fetch logic.
 
+App startup acquires a process-scoped advisory lock before SwiftUI initializes. LaunchServices normally reuses the
+installed app, but a direct executable invocation can bypass that behavior; later instances now exit before creating
+another status item. The OS releases the lock on normal exit or a crash, and startup also checks for an active older
+build that predates the lock. A lock-file setup failure is logged and does not prevent the app from launching.
+Developers can explicitly bypass the guard with `CODEXBAR_ALLOW_MULTIPLE_INSTANCES=1`.
+
 ## Compact Overview
 
 The Overview tab intentionally reuses CodexBar's standard typography, provider tint, progress bar, spacing primitives,

@@ -9,6 +9,8 @@
   cap.
 
 ### Fixed
+- App: hold a process-scoped advisory lock and exit later direct-binary launches before they create duplicate menu-bar
+  items; also detect active pre-guard builds during upgrades.
 - Claude: avoid a nested refresh TaskLocal binding during post-delegation credential reloads, preventing a Sonoma 14.4
   `swift_task_dealloc` abort while keeping stale prompt failures out of the fresh retry epoch.
 
