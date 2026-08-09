@@ -31,9 +31,11 @@ struct OverviewMenuCardRowViewTests {
             primaryUsedPercent: 70,
             secondaryUsedPercent: 80,
             updatedAt: Date(timeIntervalSince1970: 2))
-        let monitor = MenuCardRefreshMonitor { provider in
-            provider == .claude ? refreshed : nil
-        }
+        let monitor = MenuCardRefreshMonitor(
+            resolveModel: { provider in
+                provider == .claude ? refreshed : nil
+            },
+            isProviderRefreshActive: { _ in false })
         let row = OverviewMenuCardRowView(model: stale, storageText: nil, width: 310)
 
         #expect(row.resolvedLiveModel(refreshMonitor: monitor).metrics.map(\.percent) == [30, 20])
