@@ -25,7 +25,8 @@ and native menu selection. It changes content hierarchy rather than introducing 
 - one compact row per selected provider;
 - up to three primary quota windows shown as meter bars;
 - percentage and window label on the left, reset countdown on the right;
-- a one-line unavailable or refreshing state when no meter can be shown;
+- a one-line unavailable or refreshing state when no quota meter can be shown, even if the provider has cost-only
+  detail in its full tab;
 - no embedded dashboard or hover submenu in the quick-glance view.
 
 Use the existing provider tabs for account identity, diagnostics, spend, token history, projects, conversations,

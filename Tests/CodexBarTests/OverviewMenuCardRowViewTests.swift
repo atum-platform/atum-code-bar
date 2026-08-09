@@ -65,7 +65,7 @@ struct OverviewMenuCardRowViewTests {
         let row = OverviewMenuCardRowView(model: model, storageText: nil, width: 310)
 
         #expect(model.metrics.isEmpty)
-        #expect(row.compactStatusText(for: model) == "No overview data available.")
+        #expect(row.compactStatusText(for: model) == "Unavailable")
     }
 
     private static func makeClaudeModel(

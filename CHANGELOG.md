@@ -4,7 +4,9 @@
 
 ### Changed
 - Overview: preserve CodexBar's native theme while replacing rich dashboard cards with compact per-provider quota
-  meters; spend, token, project, session, storage, and diagnostic detail remains in provider tabs.
+  meters; spend, token, project, session, storage, and diagnostic detail remains in provider tabs. Live refreshes use
+  the refreshed model for row sizing, and multi-plan Doubao summaries retain an Agent Plan meter within the three-row
+  cap.
 
 ### Fixed
 - Claude: avoid a nested refresh TaskLocal binding during post-delegation credential reloads, preventing a Sonoma 14.4

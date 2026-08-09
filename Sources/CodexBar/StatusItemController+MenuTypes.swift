@@ -46,7 +46,7 @@ struct OverviewMenuCardRowView: View {
     var body: some View {
         let liveModel = self.resolvedLiveModel(refreshMonitor: self.refreshMonitor)
         let visibleMetrics = self.visibleMetrics(for: liveModel)
-        VStack(alignment: .leading, spacing: 9) {
+        VStack(alignment: .leading, spacing: UsageMenuCardLayout.headerContentSpacing) {
             Text(liveModel.providerName)
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(MenuHighlightStyle.primary(self.isHighlighted))
@@ -69,7 +69,7 @@ struct OverviewMenuCardRowView: View {
             }
         }
         .padding(.horizontal, UsageMenuCardLayout.horizontalPadding)
-        .padding(.vertical, 9)
+        .padding(.vertical, UsageMenuCardLayout.headerOnlyVerticalPadding)
         .frame(width: self.width, alignment: .leading)
     }
 
@@ -80,7 +80,16 @@ struct OverviewMenuCardRowView: View {
     }
 
     func visibleMetrics(for model: UsageMenuCardView.Model) -> [UsageMenuCardView.Model.Metric] {
-        Array(model.metrics.prefix(Self.maximumVisibleMetrics))
+        guard model.provider == .doubao,
+              model.metrics.count > Self.maximumVisibleMetrics,
+              let firstAgentMetric = model.metrics.first(where: { $0.id.hasPrefix("doubao-agent-") })
+        else {
+            return Array(model.metrics.prefix(Self.maximumVisibleMetrics))
+        }
+        let codingMetrics = model.metrics
+            .filter { !$0.id.hasPrefix("doubao-agent-") }
+            .prefix(Self.maximumVisibleMetrics - 1)
+        return Array(codingMetrics) + [firstAgentMetric]
     }
 
     func compactStatusText(for model: UsageMenuCardView.Model) -> String {
@@ -88,12 +97,12 @@ struct OverviewMenuCardRowView: View {
             return "\(L("Refreshing"))…"
         }
         if model.subtitleStyle == .error {
-            return L("No overview data available.")
+            return L("Unavailable")
         }
         if let placeholder = model.placeholder?.trimmingCharacters(in: .whitespacesAndNewlines), !placeholder.isEmpty {
             return placeholder
         }
-        return L("No overview data available.")
+        return L("Unavailable")
     }
 
     private func compactStatusColor(for model: UsageMenuCardView.Model) -> Color {

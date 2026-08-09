@@ -579,12 +579,15 @@ extension StatusItemController {
 
         for (index, row) in rows.enumerated() {
             let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.provider.rawValue)"
+            let renderedModel = self.menuCardRefreshMonitor.model(for: row.provider, fallback: row.model)
             let item = self.makeMenuCardItem(
                 OverviewMenuCardRowView(model: row.model, storageText: nil, width: menuWidth),
                 id: identifier,
                 width: menuWidth,
                 heightCacheScope: row.provider.rawValue,
-                heightCacheFingerprint: row.model.heightFingerprint(section: "compactOverview"),
+                heightCacheFingerprint: renderedModel.heightFingerprint(section: "compactOverview"),
+                // The compact row uses the shared rounded SwiftUI highlight. The full-row GPU
+                // selection layer is visually overwhelming for this intentionally small surface.
                 usesGPUSelection: false,
                 onClick: { [weak self, weak interactionMenu] in
                     guard let self, let interactionMenu else { return }
