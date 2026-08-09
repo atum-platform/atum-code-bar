@@ -45,6 +45,9 @@ jobs:
           swift test --filter OverviewMenuCardRowViewTests
           swift test --filter "compact overview omits"
 
+      - name: Test single-instance launch guard
+        run: swift test --filter CodexBarLaunchModeTests
+
       - name: Package ad-hoc app
         env:
           CODEXBAR_SIGNING: adhoc

@@ -23,6 +23,9 @@ another status item. The OS releases the lock on normal exit or a crash, and sta
 build that predates the lock. A lock-file setup failure is logged and does not prevent the app from launching.
 Developers can explicitly bypass the guard with `CODEXBAR_ALLOW_MULTIPLE_INSTANCES=1`.
 
+The fork build verifies lock contention, lock release for relaunch, legacy-instance detection, and fail-open behavior
+when the lock file cannot be created before packaging the app.
+
 ## Compact Overview
 
 The Overview tab intentionally reuses CodexBar's standard typography, provider tint, progress bar, spacing primitives,
