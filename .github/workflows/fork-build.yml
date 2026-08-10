@@ -48,6 +48,9 @@ jobs:
       - name: Test single-instance launch guard
         run: swift test --filter CodexBarLaunchModeTests
 
+      - name: Test Tahoe menu-bar visibility recovery
+        run: swift test --filter MenuBarVisibilityWatcherTests
+
       - name: Package ad-hoc app
         env:
           CODEXBAR_SIGNING: adhoc
