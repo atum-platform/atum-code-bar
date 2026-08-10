@@ -11,6 +11,8 @@
 ### Fixed
 - App: hold a process-scoped advisory lock and exit later direct-binary launches before they create duplicate menu-bar
   items; also detect active pre-guard builds during upgrades.
+- App: recover a visible menu-bar item that Tahoe parks off-screen without publishing a Control Center proxy
+  window, so the app does not remain running but invisible after a macOS update or display-state change.
 - Claude: avoid a nested refresh TaskLocal binding during post-delegation credential reloads, preventing a Sonoma 14.4
   `swift_task_dealloc` abort while keeping stale prompt failures out of the fresh retry epoch.
 
