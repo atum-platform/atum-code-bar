@@ -6,7 +6,7 @@ import Testing
 struct OverviewMenuCardRowViewTests {
     @Test
     @MainActor
-    func `compact overview preserves every quota meter`() throws {
+    func `compact overview shows weekly before session`() throws {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         let model = try Self.makeClaudeModel(
             primaryUsedPercent: 25,
@@ -16,8 +16,23 @@ struct OverviewMenuCardRowViewTests {
         #expect(model.metrics.map(\.id) == ["primary", "secondary"])
         let row = OverviewMenuCardRowView(model: model, storageText: nil, width: 310)
         let liveModel = row.resolvedLiveModel(refreshMonitor: nil)
-        #expect(row.visibleMetrics(for: liveModel).map(\.id) == ["primary", "secondary"])
+        #expect(row.visibleMetrics(for: liveModel).map(\.id) == ["secondary", "primary"])
         #expect(OverviewMenuCardRowView.maximumVisibleMetrics == 3)
+    }
+
+    @Test
+    @MainActor
+    func `compact overview respects providers whose primary metric is weekly`() throws {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let model = try Self.makeModel(
+            provider: .kimi,
+            primaryUsedPercent: 25,
+            secondaryUsedPercent: 60,
+            updatedAt: now)
+
+        #expect(model.metrics.map(\.id) == ["secondary", "primary"])
+        let row = OverviewMenuCardRowView(model: model, storageText: nil, width: 310)
+        #expect(row.visibleMetrics(for: model).map(\.id) == ["primary", "secondary"])
     }
 
     @Test
@@ -75,22 +90,37 @@ struct OverviewMenuCardRowViewTests {
         secondaryUsedPercent: Double,
         updatedAt: Date) throws -> UsageMenuCardView.Model
     {
-        let metadata = try #require(ProviderDefaults.metadata[.claude])
+        try self.makeModel(
+            provider: .claude,
+            primaryUsedPercent: primaryUsedPercent,
+            secondaryUsedPercent: secondaryUsedPercent,
+            updatedAt: updatedAt)
+    }
+
+    private static func makeModel(
+        provider: UsageProvider,
+        primaryUsedPercent: Double,
+        secondaryUsedPercent: Double,
+        updatedAt: Date) throws -> UsageMenuCardView.Model
+    {
+        let metadata = try #require(ProviderDefaults.metadata[provider])
+        let primaryWindowMinutes = provider == .kimi ? 10080 : 300
+        let secondaryWindowMinutes = provider == .kimi ? 300 : 10080
         let snapshot = UsageSnapshot(
             primary: RateWindow(
                 usedPercent: primaryUsedPercent,
-                windowMinutes: 300,
+                windowMinutes: primaryWindowMinutes,
                 resetsAt: updatedAt.addingTimeInterval(3600),
                 resetDescription: nil),
             secondary: RateWindow(
                 usedPercent: secondaryUsedPercent,
-                windowMinutes: 10080,
+                windowMinutes: secondaryWindowMinutes,
                 resetsAt: updatedAt.addingTimeInterval(86400),
                 resetDescription: nil),
             updatedAt: updatedAt,
             identity: nil)
         return UsageMenuCardView.Model.make(.init(
-            provider: .claude,
+            provider: provider,
             metadata: metadata,
             snapshot: snapshot,
             credits: nil,

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Order compact Overview quota meters by weekly usage, then session usage, then any additional limits.
+
 ## 0.48.1-fork — 2026-08-09
 
 ### Changed
