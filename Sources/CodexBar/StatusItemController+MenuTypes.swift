@@ -80,44 +80,16 @@ struct OverviewMenuCardRowView: View {
     }
 
     func visibleMetrics(for model: UsageMenuCardView.Model) -> [UsageMenuCardView.Model.Metric] {
-        let orderedMetrics = self.weeklyFirstMetrics(for: model)
         guard model.provider == .doubao,
-              orderedMetrics.count > Self.maximumVisibleMetrics,
-              let firstAgentMetric = orderedMetrics.first(where: { $0.id.hasPrefix("doubao-agent-") })
+              model.metrics.count > Self.maximumVisibleMetrics,
+              let firstAgentMetric = model.metrics.first(where: { $0.id.hasPrefix("doubao-agent-") })
         else {
-            return Array(orderedMetrics.prefix(Self.maximumVisibleMetrics))
+            return Array(model.metrics.prefix(Self.maximumVisibleMetrics))
         }
-        let codingMetrics = orderedMetrics
+        let codingMetrics = model.metrics
             .filter { !$0.id.hasPrefix("doubao-agent-") }
             .prefix(Self.maximumVisibleMetrics - 1)
         return Array(codingMetrics) + [firstAgentMetric]
-    }
-
-    private func weeklyFirstMetrics(
-        for model: UsageMenuCardView.Model) -> [UsageMenuCardView.Model.Metric]
-    {
-        let presentation = ProviderDescriptorRegistry.descriptor(for: model.provider).presentation
-        return model.metrics.enumerated().sorted { lhs, rhs in
-            let lhsRank = Self.compactMetricRank(lhs.element, presentation: presentation)
-            let rhsRank = Self.compactMetricRank(rhs.element, presentation: presentation)
-            return lhsRank == rhsRank ? lhs.offset < rhs.offset : lhsRank < rhsRank
-        }.map(\.element)
-    }
-
-    private static func compactMetricRank(
-        _ metric: UsageMenuCardView.Model.Metric,
-        presentation: ProviderUsagePresentation) -> Int
-    {
-        let semanticWindow: ProviderSemanticWindow? = switch metric.id {
-        case "primary": presentation.primarySemanticWindow
-        case "secondary": presentation.secondarySemanticWindow
-        default: nil
-        }
-        return switch semanticWindow {
-        case .some(.weekly): 0
-        case .some(.session): 1
-        case nil: 2
-        }
     }
 
     func compactStatusText(for model: UsageMenuCardView.Model) -> String {

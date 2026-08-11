@@ -35,6 +35,7 @@ struct UsageMenuCardView: View {
             let title: String
             let percent: Double
             let percentStyle: PercentStyle
+            let windowMinutes: Int?
             let statusText: String?
             let resetText: String?
             let detailText: String?
@@ -52,6 +53,7 @@ struct UsageMenuCardView: View {
                 title: String,
                 percent: Double,
                 percentStyle: PercentStyle,
+                windowMinutes: Int? = nil,
                 statusText: String? = nil,
                 resetText: String?,
                 detailText: String?,
@@ -68,6 +70,7 @@ struct UsageMenuCardView: View {
                 self.title = title
                 self.percent = percent
                 self.percentStyle = percentStyle
+                self.windowMinutes = windowMinutes
                 self.statusText = statusText
                 self.resetText = resetText
                 self.detailText = detailText
@@ -1202,7 +1205,7 @@ extension UsageMenuCardView.Model {
     private static func metrics(input: Input) -> [Metric] {
         guard let snapshot = input.snapshot else { return [] }
         if input.provider == .antigravity {
-            return Self.antigravityMetrics(input: input, snapshot: snapshot)
+            return Self.weeklyFirstMetrics(Self.antigravityMetrics(input: input, snapshot: snapshot))
         }
         var metrics: [Metric] = []
         let percentStyle: PercentStyle = input.usageBarsShowUsed ? .used : .left
@@ -1258,6 +1261,7 @@ extension UsageMenuCardView.Model {
                 title: labels.tertiary,
                 percent: Self.clamped(input.usageBarsShowUsed ? opus.usedPercent : opus.remainingPercent),
                 percentStyle: percentStyle,
+                windowMinutes: opus.windowMinutes,
                 resetText: opusResetText,
                 detailText: tertiaryDetailText,
                 detailLeftText: tertiaryPaceDetail?.leftLabel,
@@ -1272,25 +1276,13 @@ extension UsageMenuCardView.Model {
             snapshot: snapshot,
             input: input,
             percentStyle: percentStyle))
-        if input.provider == .kilo || input.provider == .kimi,
-           metrics.contains(where: { $0.id == "primary" }),
-           metrics.contains(where: { $0.id == "secondary" })
-        {
-            metrics.sort { lhs, rhs in
-                let primarySecondaryOrder: [String: Int] = [
-                    "secondary": 0,
-                    "primary": 1,
-                ]
-                return (primarySecondaryOrder[lhs.id] ?? Int.max) < (primarySecondaryOrder[rhs.id] ?? Int.max)
-            }
-        }
-
         if let codexProjection = input.codexProjection,
            codexProjection.supplementalMetrics.contains(.codeReview),
            let remaining = codexProjection.remainingPercent(for: .codeReview)
         {
             let percent = input.usageBarsShowUsed ? (100 - remaining) : remaining
-            let resetText = codexProjection.limitWindow(for: .codeReview).flatMap {
+            let codeReviewWindow = codexProjection.limitWindow(for: .codeReview)
+            let resetText = codeReviewWindow.flatMap {
                 Self.resetText(for: $0, style: input.resetTimeDisplayStyle, now: input.now)
             }
             metrics.append(Metric(
@@ -1298,6 +1290,7 @@ extension UsageMenuCardView.Model {
                 title: L("Code review"),
                 percent: Self.clamped(percent),
                 percentStyle: percentStyle,
+                windowMinutes: codeReviewWindow?.windowMinutes,
                 resetText: resetText,
                 detailText: nil,
                 detailLeftText: nil,
@@ -1305,7 +1298,22 @@ extension UsageMenuCardView.Model {
                 pacePercent: nil,
                 paceOnTop: true))
         }
-        return metrics
+        return Self.weeklyFirstMetrics(metrics)
+    }
+
+    private static func weeklyFirstMetrics(_ metrics: [Metric]) -> [Metric] {
+        metrics.enumerated().sorted { lhs, rhs in
+            let lhsRank = Self.cadenceRank(windowMinutes: lhs.element.windowMinutes)
+            let rhsRank = Self.cadenceRank(windowMinutes: rhs.element.windowMinutes)
+            return lhsRank == rhsRank ? lhs.offset < rhs.offset : lhsRank < rhsRank
+        }.map(\.element)
+    }
+
+    private static func cadenceRank(windowMinutes: Int?) -> Int {
+        guard let windowMinutes else { return 2 }
+        if windowMinutes == 7 * 24 * 60 { return 0 }
+        if (60...(12 * 60)).contains(windowMinutes) { return 1 }
+        return 2
     }
 
     private static func primaryMetric(
@@ -1331,6 +1339,7 @@ extension UsageMenuCardView.Model {
             percent: Self.clamped(
                 input.usageBarsShowUsed ? primary.usedPercent : primary.remainingPercent),
             percentStyle: percentStyle,
+            windowMinutes: primary.windowMinutes,
             statusText: presentation.statusText,
             resetText: presentation.resetText,
             detailText: presentation.detailText,
@@ -1459,6 +1468,7 @@ extension UsageMenuCardView.Model {
             title: title ?? L(input.metadata.weeklyLabel),
             percent: Self.clamped(input.usageBarsShowUsed ? weekly.usedPercent : weekly.remainingPercent),
             percentStyle: percentStyle,
+            windowMinutes: weekly.windowMinutes,
             statusText: nil,
             resetText: weeklyResetText,
             detailText: weeklyDetailText,

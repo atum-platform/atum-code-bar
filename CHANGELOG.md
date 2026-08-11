@@ -2,7 +2,10 @@
 
 ## Unreleased
 
-- Order compact Overview quota meters by weekly usage, then session usage, then any additional limits.
+### Changed
+
+- Order quota meters by their reported cadence: genuine weekly usage first, then session usage, then any additional
+  limits. Non-cadence rows such as balances, bonus credits, and model-specific quotas preserve provider order.
 
 ## 0.48.1-fork — 2026-08-09
 
