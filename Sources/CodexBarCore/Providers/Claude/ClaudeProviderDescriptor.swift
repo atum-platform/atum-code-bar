@@ -1011,9 +1011,11 @@ struct ClaudeCLIFetchStrategy: ProviderFetchStrategy {
                 try await fetcher.loadLatestUsage(model: "sonnet")
             }
         } catch {
-            if error is CancellationError || Task.isCancelled || error is ClaudeBackgroundDirectCLIError {
+            if error is CancellationError || Task.isCancelled || error is ClaudeBackgroundDirectCLIError
+                || ClaudeUsageFetcher.isCLIRateLimitError(error)
+            {
                 // Cancellation is not a provider failure. The typed background error means the shared rate-limit
-                // gate prevented process launch; preserve availability so a later timer tick can retry.
+                // gate prevented process launch; a live rate-limit response also needs the next post-cooldown retry.
                 throw error
             }
             if let backgroundAvailabilityMarker {

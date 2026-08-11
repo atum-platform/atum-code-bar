@@ -145,8 +145,9 @@ identity leaves background CLI unavailable.
 
 Regression coverage verifies cold-start recovery with Keychain enabled and **Only on user action**, direct `/usage`
 execution without auth preflight or PTY, timer retry suppression, rate-limit cooldown preservation, and account-scope
-isolation. Cancellation and a cooldown that prevents process launch do not revoke background availability. SwiftFormat
-and SwiftLint run locally; compile/test verification uses the repository's Swift 6.2+ workflows because the
+isolation. Cancellation, a cooldown that prevents process launch, and a live rate-limit response do not revoke
+background availability. SwiftFormat and SwiftLint run locally; compile/test verification uses the repository's
+Swift 6.2+ workflows because the
 maintenance Mac currently has Xcode 15.4. The fork's macOS build workflow runs the dedicated Claude background Auto
 durability suite before packaging the installable app.
 

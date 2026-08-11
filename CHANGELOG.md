@@ -13,7 +13,8 @@
 - Claude: keep Auto usage available after app restarts and OAuth expiry by running one bounded, stdin-closed
   `claude /usage` fallback during background refresh. Auth-status, version, and interactive PTY probes remain behind
   the existing Keychain prompt gates, and a failed direct attempt is suppressed for that account until restart or a
-  successful foreground refresh. Cancellation and rate-limit cooldown skips preserve the next scheduled attempt.
+  successful foreground refresh. Cancellation, rate-limit cooldown skips, and live rate-limit responses preserve the
+  next scheduled attempt.
 
 ## 0.48.1-fork — 2026-08-09
 

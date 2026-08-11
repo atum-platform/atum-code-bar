@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
+@Suite(.serialized)
 struct ClaudeCLIBackgroundAvailabilityTests {
     @Test
     func `disabled Keychain allows cold background Auto usage without an established marker`() async throws {
@@ -207,6 +208,29 @@ struct ClaudeCLIBackgroundAvailabilityTests {
     }
 
     @Test
+    func `live rate limit response records cooldown without revoking background Auto`() async throws {
+        ClaudeCLIRateLimitGate.resetForTesting()
+        defer { ClaudeCLIRateLimitGate.resetForTesting() }
+        let profile = try self.makeProfile(accountID: "account-a")
+        defer { try? FileManager.default.removeItem(at: profile.root) }
+        var environment = profile.environment
+        environment["CLAUDE_CLI_PATH"] = try self.makeRateLimitedCLI(root: profile.root)
+        let strategy = self.makeStrategy()
+        let context = self.makeContext(environment: environment)
+
+        await ClaudeCLIBackgroundAvailability.withIsolatedStoreForTesting {
+            await ProviderInteractionContext.$current.withValue(.background) {
+                #expect(await strategy.isAvailable(context))
+                await #expect(throws: (any Error).self) {
+                    try await strategy.fetch(context)
+                }
+                #expect(ClaudeCLIRateLimitGate.blockedUntil() != nil)
+                #expect(await strategy.isAvailable(context))
+            }
+        }
+    }
+
+    @Test
     func `user initiated explicit OAuth retains interactive CLI recovery`() async {
         let strategy = self.makeStrategy()
         let context = self.makeContext(sourceMode: .oauth)
@@ -341,6 +365,21 @@ struct ClaudeCLIBackgroundAvailabilityTests {
         EOF
         """
         let url = root.appendingPathComponent("claude-direct-usage-stub")
+        try Data(script.utf8).write(to: url)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path)
+        return url.path
+    }
+
+    private func makeRateLimitedCLI(root: URL) throws -> String {
+        let script = """
+        #!/bin/sh
+        if [ "$1" = "/usage" ]; then
+          printf '%s\\n' 'Failed to load usage data: rate_limit_error'
+          exit 0
+        fi
+        exit 99
+        """
+        let url = root.appendingPathComponent("claude-rate-limit-stub")
         try Data(script.utf8).write(to: url)
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path)
         return url.path
