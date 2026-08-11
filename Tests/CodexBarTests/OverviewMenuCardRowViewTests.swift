@@ -54,13 +54,25 @@ struct OverviewMenuCardRowViewTests {
     @MainActor
     func `preordered provider metrics remain weekly first`() throws {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
-        let model = try Self.makeModel(
+        let metadata = try #require(ProviderDefaults.metadata[.kilo])
+        let snapshot = UsageSnapshot(
+            primary: RateWindow(
+                usedPercent: 25,
+                windowMinutes: nil,
+                resetsAt: nil,
+                resetDescription: "25/100 credits"),
+            secondary: RateWindow(
+                usedPercent: 60,
+                windowMinutes: nil,
+                resetsAt: now.addingTimeInterval(86400),
+                resetDescription: "$60 / $100"),
+            updatedAt: now,
+            identity: nil)
+        let model = UsageMenuCardView.Model.make(Self.input(
             provider: .kilo,
-            primaryUsedPercent: 25,
-            secondaryUsedPercent: 60,
-            primaryWindowMinutes: 5 * 60,
-            secondaryWindowMinutes: 7 * 24 * 60,
-            updatedAt: now)
+            metadata: metadata,
+            snapshot: snapshot,
+            now: now))
 
         #expect(model.metrics.map(\.id) == ["secondary", "primary"])
     }

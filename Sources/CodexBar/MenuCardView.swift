@@ -1205,7 +1205,9 @@ extension UsageMenuCardView.Model {
     private static func metrics(input: Input) -> [Metric] {
         guard let snapshot = input.snapshot else { return [] }
         if input.provider == .antigravity {
-            return Self.weeklyFirstMetrics(Self.antigravityMetrics(input: input, snapshot: snapshot))
+            return Self.weeklyFirstMetrics(
+                Self.antigravityMetrics(input: input, snapshot: snapshot),
+                provider: input.provider)
         }
         var metrics: [Metric] = []
         let percentStyle: PercentStyle = input.usageBarsShowUsed ? .used : .left
@@ -1298,11 +1300,21 @@ extension UsageMenuCardView.Model {
                 pacePercent: nil,
                 paceOnTop: true))
         }
-        return Self.weeklyFirstMetrics(metrics)
+        return Self.weeklyFirstMetrics(metrics, provider: input.provider)
     }
 
-    private static func weeklyFirstMetrics(_ metrics: [Metric]) -> [Metric] {
-        metrics.enumerated().sorted { lhs, rhs in
+    private static func weeklyFirstMetrics(_ metrics: [Metric], provider: UsageProvider) -> [Metric] {
+        let providerOrderedMetrics = if provider == .kilo {
+            metrics.enumerated().sorted { lhs, rhs in
+                let preferredOrder = ["secondary": 0, "primary": 1]
+                let lhsRank = preferredOrder[lhs.element.id] ?? 2
+                let rhsRank = preferredOrder[rhs.element.id] ?? 2
+                return lhsRank == rhsRank ? lhs.offset < rhs.offset : lhsRank < rhsRank
+            }.map(\.element)
+        } else {
+            metrics
+        }
+        return providerOrderedMetrics.enumerated().sorted { lhs, rhs in
             let lhsRank = Self.cadenceRank(windowMinutes: lhs.element.windowMinutes)
             let rhsRank = Self.cadenceRank(windowMinutes: rhs.element.windowMinutes)
             return lhsRank == rhsRank ? lhs.offset < rhs.offset : lhsRank < rhsRank
