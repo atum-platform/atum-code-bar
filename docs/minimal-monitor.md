@@ -147,7 +147,8 @@ Regression coverage verifies cold-start recovery with Keychain enabled and **Onl
 execution without auth preflight or PTY, timer retry suppression, rate-limit cooldown preservation, and account-scope
 isolation. Cancellation and a cooldown that prevents process launch do not revoke background availability. SwiftFormat
 and SwiftLint run locally; compile/test verification uses the repository's Swift 6.2+ workflows because the
-maintenance Mac currently has Xcode 15.4.
+maintenance Mac currently has Xcode 15.4. The fork's macOS build workflow runs the dedicated Claude background Auto
+durability suite before packaging the installable app.
 
 The crash fix is suitable for upstream contribution. The compact Overview is a fork-specific product choice; the
 provider-routing policy should stay outside the app unless repeated use shows that a dedicated policy command is
