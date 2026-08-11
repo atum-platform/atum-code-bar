@@ -144,9 +144,10 @@ succeeds. Switching Claude accounts creates a new scope and permits one fresh bo
 identity leaves background CLI unavailable.
 
 Regression coverage verifies cold-start recovery with Keychain enabled and **Only on user action**, direct `/usage`
-execution without auth preflight or PTY, web fallback after direct failure, timer retry suppression, and account-scope
-isolation. SwiftFormat and SwiftLint run locally; compile/test verification requires the repository's Swift 6.2+
-macOS workflow because the maintenance Mac currently has Xcode 15.4.
+execution without auth preflight or PTY, timer retry suppression, rate-limit cooldown preservation, and account-scope
+isolation. Cancellation and a cooldown that prevents process launch do not revoke background availability. SwiftFormat
+and SwiftLint run locally; compile/test verification uses the repository's Swift 6.2+ workflows because the
+maintenance Mac currently has Xcode 15.4.
 
 The crash fix is suitable for upstream contribution. The compact Overview is a fork-specific product choice; the
 provider-routing policy should stay outside the app unless repeated use shows that a dedicated policy command is

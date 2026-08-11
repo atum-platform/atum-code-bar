@@ -102,6 +102,14 @@ public enum ClaudeUsageError: LocalizedError, Sendable {
     }
 }
 
+enum ClaudeBackgroundDirectCLIError: LocalizedError, Sendable {
+    case blockedByRateLimitGate
+
+    var errorDescription: String? {
+        ClaudeCLIRateLimitGate.message
+    }
+}
+
 public struct ClaudeUsageFetcher: ClaudeUsageFetching, Sendable {
     private static let sessionWindowMinutes = 5 * 60
     private static let weeklyWindowMinutes = 7 * 24 * 60
@@ -1292,7 +1300,7 @@ extension ClaudeUsageFetcher {
     /// an interactive Claude session that may open browser or Keychain UI.
     func loadViaBackgroundDirectCLI(timeout: TimeInterval = 12) async throws -> ClaudeUsageSnapshot {
         if ClaudeCLIRateLimitGate.blockedUntil() != nil {
-            throw ClaudeUsageError.parseFailed(ClaudeCLIRateLimitGate.message)
+            throw ClaudeBackgroundDirectCLIError.blockedByRateLimitGate
         }
 
         do {

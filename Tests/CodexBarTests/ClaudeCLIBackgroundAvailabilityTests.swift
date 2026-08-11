@@ -126,6 +126,8 @@ struct ClaudeCLIBackgroundAvailabilityTests {
 
     @Test
     func `failed prompt-free background usage revokes later timer attempts`() async throws {
+        ClaudeCLIRateLimitGate.resetForTesting()
+        defer { ClaudeCLIRateLimitGate.resetForTesting() }
         let strategy = self.makeStrategy()
         let profile = try self.makeProfile(accountID: "account-a")
         defer { try? FileManager.default.removeItem(at: profile.root) }
@@ -149,6 +151,8 @@ struct ClaudeCLIBackgroundAvailabilityTests {
 
     @Test
     func `background Auto fetch runs only the prompt-free usage command`() async throws {
+        ClaudeCLIRateLimitGate.resetForTesting()
+        defer { ClaudeCLIRateLimitGate.resetForTesting() }
         let profile = try self.makeProfile(accountID: "account-a")
         let invocationLog = profile.root.appendingPathComponent("invocations.log")
         let cliPath = try self.makeDirectUsageCLI(root: profile.root, invocationLog: invocationLog)
@@ -177,6 +181,29 @@ struct ClaudeCLIBackgroundAvailabilityTests {
             .split(whereSeparator: \Character.isNewline)
             .map(String.init)
         #expect(invocations == ["/usage"])
+    }
+
+    @Test
+    func `rate limit cooldown skips launch without revoking background Auto`() async throws {
+        ClaudeCLIRateLimitGate.resetForTesting()
+        defer { ClaudeCLIRateLimitGate.resetForTesting() }
+        let strategy = self.makeStrategy()
+        let profile = try self.makeProfile(accountID: "account-a")
+        defer { try? FileManager.default.removeItem(at: profile.root) }
+        let context = self.makeContext(environment: profile.environment)
+        ClaudeCLIRateLimitGate.recordRateLimit()
+
+        await ClaudeCLIBackgroundAvailability.withIsolatedStoreForTesting {
+            await ClaudeCLIResolver.withResolvedBinaryPathOverrideForTesting("/bin/echo") {
+                await ProviderInteractionContext.$current.withValue(.background) {
+                    #expect(await strategy.isAvailable(context))
+                    await #expect(throws: ClaudeBackgroundDirectCLIError.self) {
+                        try await strategy.fetch(context)
+                    }
+                    #expect(await strategy.isAvailable(context))
+                }
+            }
+        }
     }
 
     @Test
