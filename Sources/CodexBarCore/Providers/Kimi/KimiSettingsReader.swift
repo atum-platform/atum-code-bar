@@ -97,6 +97,11 @@ public enum KimiSettingsReader {
         ]
     }
 
+    private static func hasCodeEndpointOverride(environment: [String: String]) -> Bool {
+        if self.cleaned(environment[self.codeAPIBaseURLEnvironmentKey]) != nil { return true }
+        return self.codeOAuthHostEnvironmentKeys.contains { self.cleaned(environment[$0]) != nil }
+    }
+
     static func refreshUsingOfficialKimiCLI(environment: [String: String]) async throws {
         let home = self.kimiCodeHomeURL(environment: environment)
         let homeBinary = home.appendingPathComponent("bin/kimi", isDirectory: false).path
