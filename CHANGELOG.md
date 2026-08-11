@@ -8,6 +8,13 @@
   then any additional limits. Detailed provider cards and non-cadence rows such as balances, bonus credits, and
   model-specific quotas preserve their native provider order.
 
+### Fixed
+
+- Claude: keep Auto usage available after app restarts and OAuth expiry by running one bounded, stdin-closed
+  `claude /usage` fallback during background refresh. Auth-status, version, and interactive PTY probes remain behind
+  the existing Keychain prompt gates, and a failed direct attempt is suppressed for that account until restart or a
+  successful foreground refresh.
+
 ## 0.48.1-fork — 2026-08-09
 
 ### Changed

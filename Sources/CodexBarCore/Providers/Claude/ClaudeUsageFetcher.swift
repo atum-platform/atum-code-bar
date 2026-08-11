@@ -1287,6 +1287,26 @@ extension ClaudeUsageFetcher {
         return try Self.makeSnapshot(from: snap)
     }
 
+    /// Runs Claude's usage-only command without a PTY, auth preflight, or writable stdin.
+    /// Background Auto uses this path so an expired OAuth cache can recover without launching
+    /// an interactive Claude session that may open browser or Keychain UI.
+    func loadViaBackgroundDirectCLI(timeout: TimeInterval = 12) async throws -> ClaudeUsageSnapshot {
+        if ClaudeCLIRateLimitGate.blockedUntil() != nil {
+            throw ClaudeUsageError.parseFailed(ClaudeCLIRateLimitGate.message)
+        }
+
+        do {
+            let snapshot = try await self.loadViaDirectCLI(timeout: timeout)
+            ClaudeCLIRateLimitGate.recordSuccess()
+            return snapshot
+        } catch {
+            if ClaudeUsageFetcher.isCLIRateLimitError(error) {
+                ClaudeCLIRateLimitGate.recordRateLimit()
+            }
+            throw error
+        }
+    }
+
     private func loadViaDirectCLI(timeout: TimeInterval) async throws -> ClaudeUsageSnapshot {
         guard let claudeBinary = ClaudeCLIResolver.resolvedBinaryPath(environment: self.environment) else {
             throw ClaudeUsageError.claudeNotInstalled
