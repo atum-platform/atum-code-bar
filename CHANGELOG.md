@@ -4,9 +4,9 @@
 
 ### Changed
 
-- Order quota meters by their reported cadence: genuine weekly usage first, then session usage, then any additional
-  limits. Non-cadence rows such as balances, bonus credits, and model-specific quotas preserve provider order,
-  including Kilo's established Kilo Pass-before-credits presentation.
+- Order compact Overview quota meters by their reported cadence: genuine weekly usage first, then session usage,
+  then any additional limits. Detailed provider cards and non-cadence rows such as balances, bonus credits, and
+  model-specific quotas preserve their native provider order.
 
 ## 0.48.1-fork — 2026-08-09
 

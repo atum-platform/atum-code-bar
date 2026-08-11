@@ -80,16 +80,29 @@ struct OverviewMenuCardRowView: View {
     }
 
     func visibleMetrics(for model: UsageMenuCardView.Model) -> [UsageMenuCardView.Model.Metric] {
+        // Overview is intentionally cadence-first; detailed provider cards retain their native ordering.
+        let orderedMetrics = model.metrics.enumerated().sorted { lhs, rhs in
+            let lhsRank = Self.compactCadenceRank(windowMinutes: lhs.element.windowMinutes)
+            let rhsRank = Self.compactCadenceRank(windowMinutes: rhs.element.windowMinutes)
+            return lhsRank == rhsRank ? lhs.offset < rhs.offset : lhsRank < rhsRank
+        }.map(\.element)
         guard model.provider == .doubao,
-              model.metrics.count > Self.maximumVisibleMetrics,
-              let firstAgentMetric = model.metrics.first(where: { $0.id.hasPrefix("doubao-agent-") })
+              orderedMetrics.count > Self.maximumVisibleMetrics,
+              let firstAgentMetric = orderedMetrics.first(where: { $0.id.hasPrefix("doubao-agent-") })
         else {
-            return Array(model.metrics.prefix(Self.maximumVisibleMetrics))
+            return Array(orderedMetrics.prefix(Self.maximumVisibleMetrics))
         }
-        let codingMetrics = model.metrics
+        let codingMetrics = orderedMetrics
             .filter { !$0.id.hasPrefix("doubao-agent-") }
             .prefix(Self.maximumVisibleMetrics - 1)
         return Array(codingMetrics) + [firstAgentMetric]
+    }
+
+    private static func compactCadenceRank(windowMinutes: Int?) -> Int {
+        guard let windowMinutes else { return 2 }
+        if windowMinutes == 7 * 24 * 60 { return 0 }
+        if (60...(12 * 60)).contains(windowMinutes) { return 1 }
+        return 2
     }
 
     func compactStatusText(for model: UsageMenuCardView.Model) -> String {

@@ -1205,9 +1205,7 @@ extension UsageMenuCardView.Model {
     private static func metrics(input: Input) -> [Metric] {
         guard let snapshot = input.snapshot else { return [] }
         if input.provider == .antigravity {
-            return Self.weeklyFirstMetrics(
-                Self.antigravityMetrics(input: input, snapshot: snapshot),
-                provider: input.provider)
+            return Self.antigravityMetrics(input: input, snapshot: snapshot)
         }
         var metrics: [Metric] = []
         let percentStyle: PercentStyle = input.usageBarsShowUsed ? .used : .left
@@ -1278,6 +1276,18 @@ extension UsageMenuCardView.Model {
             snapshot: snapshot,
             input: input,
             percentStyle: percentStyle))
+        if input.provider == .kilo || input.provider == .kimi,
+           metrics.contains(where: { $0.id == "primary" }),
+           metrics.contains(where: { $0.id == "secondary" })
+        {
+            metrics.sort { lhs, rhs in
+                let primarySecondaryOrder: [String: Int] = [
+                    "secondary": 0,
+                    "primary": 1,
+                ]
+                return (primarySecondaryOrder[lhs.id] ?? Int.max) < (primarySecondaryOrder[rhs.id] ?? Int.max)
+            }
+        }
         if let codexProjection = input.codexProjection,
            codexProjection.supplementalMetrics.contains(.codeReview),
            let remaining = codexProjection.remainingPercent(for: .codeReview)
@@ -1300,32 +1310,7 @@ extension UsageMenuCardView.Model {
                 pacePercent: nil,
                 paceOnTop: true))
         }
-        return Self.weeklyFirstMetrics(metrics, provider: input.provider)
-    }
-
-    private static func weeklyFirstMetrics(_ metrics: [Metric], provider: UsageProvider) -> [Metric] {
-        let providerOrderedMetrics = if provider == .kilo {
-            metrics.enumerated().sorted { lhs, rhs in
-                let preferredOrder = ["secondary": 0, "primary": 1]
-                let lhsRank = preferredOrder[lhs.element.id] ?? 2
-                let rhsRank = preferredOrder[rhs.element.id] ?? 2
-                return lhsRank == rhsRank ? lhs.offset < rhs.offset : lhsRank < rhsRank
-            }.map(\.element)
-        } else {
-            metrics
-        }
-        return providerOrderedMetrics.enumerated().sorted { lhs, rhs in
-            let lhsRank = Self.cadenceRank(windowMinutes: lhs.element.windowMinutes)
-            let rhsRank = Self.cadenceRank(windowMinutes: rhs.element.windowMinutes)
-            return lhsRank == rhsRank ? lhs.offset < rhs.offset : lhsRank < rhsRank
-        }.map(\.element)
-    }
-
-    private static func cadenceRank(windowMinutes: Int?) -> Int {
-        guard let windowMinutes else { return 2 }
-        if windowMinutes == 7 * 24 * 60 { return 0 }
-        if (60...(12 * 60)).contains(windowMinutes) { return 1 }
-        return 2
+        return metrics
     }
 
     private static func primaryMetric(

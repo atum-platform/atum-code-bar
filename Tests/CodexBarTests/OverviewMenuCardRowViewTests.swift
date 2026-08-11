@@ -13,7 +13,7 @@ struct OverviewMenuCardRowViewTests {
             secondaryUsedPercent: 60,
             updatedAt: now)
 
-        #expect(model.metrics.map(\.id) == ["secondary", "primary"])
+        #expect(model.metrics.map(\.id) == ["primary", "secondary"])
         let row = OverviewMenuCardRowView(model: model, storageText: nil, width: 310)
         let liveModel = row.resolvedLiveModel(refreshMonitor: nil)
         #expect(row.visibleMetrics(for: liveModel).map(\.id) == ["secondary", "primary"])
@@ -30,7 +30,7 @@ struct OverviewMenuCardRowViewTests {
             secondaryUsedPercent: 60,
             updatedAt: now)
 
-        #expect(model.metrics.map(\.id) == ["primary", "secondary"])
+        #expect(model.metrics.map(\.id) == ["secondary", "primary"])
         let row = OverviewMenuCardRowView(model: model, storageText: nil, width: 310)
         #expect(row.visibleMetrics(for: model).map(\.id) == ["primary", "secondary"])
     }
@@ -48,6 +48,8 @@ struct OverviewMenuCardRowViewTests {
             updatedAt: now)
 
         #expect(model.metrics.map(\.id) == ["primary", "secondary"])
+        let row = OverviewMenuCardRowView(model: model, storageText: nil, width: 310)
+        #expect(row.visibleMetrics(for: model).map(\.id) == ["primary", "secondary"])
     }
 
     @Test
@@ -134,7 +136,8 @@ struct OverviewMenuCardRowViewTests {
             isProviderRefreshActive: { _ in false })
         let row = OverviewMenuCardRowView(model: stale, storageText: nil, width: 310)
 
-        #expect(row.resolvedLiveModel(refreshMonitor: monitor).metrics.map(\.percent) == [20, 30])
+        let liveModel = row.resolvedLiveModel(refreshMonitor: monitor)
+        #expect(row.visibleMetrics(for: liveModel).map(\.percent) == [20, 30])
     }
 
     @Test
