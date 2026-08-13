@@ -16,9 +16,13 @@ on:
           - upstream
           - quotio
 
+concurrency:
+  group: upstream-monitor
+  cancel-in-progress: false
+
 jobs:
   check-upstreams:
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, macOS, ARM64, mac-mini, local-ci]
     permissions:
       issues: write
       contents: read
@@ -28,11 +32,6 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
-      
-      - name: Configure git
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
       
       - name: Add upstream remotes
         run: |
@@ -69,25 +68,25 @@ jobs:
           QUOTIO_BRANCH=$(remote_default_branch quotio)
           UPSTREAM_REF="upstream/${UPSTREAM_BRANCH}"
           QUOTIO_REF="quotio/${QUOTIO_BRANCH}"
-          echo "upstream_ref=$UPSTREAM_REF" >> $GITHUB_OUTPUT
-          echo "quotio_ref=$QUOTIO_REF" >> $GITHUB_OUTPUT
+          echo "upstream_ref=$UPSTREAM_REF" >> "$GITHUB_OUTPUT"
+          echo "quotio_ref=$QUOTIO_REF" >> "$GITHUB_OUTPUT"
 
           # Count new commits in upstream
           UPSTREAM_NEW=$(git log --oneline "main..${UPSTREAM_REF}" --no-merges 2>/dev/null | wc -l | tr -d ' ')
-          echo "upstream_commits=$UPSTREAM_NEW" >> $GITHUB_OUTPUT
+          echo "upstream_commits=$UPSTREAM_NEW" >> "$GITHUB_OUTPUT"
           
           # Count new commits in quotio (last 7 days)
           QUOTIO_NEW=$(git log --oneline "$QUOTIO_REF" --since="7 days ago" 2>/dev/null | wc -l | tr -d ' ')
-          echo "quotio_commits=$QUOTIO_NEW" >> $GITHUB_OUTPUT
+          echo "quotio_commits=$QUOTIO_NEW" >> "$GITHUB_OUTPUT"
           
           # Get commit summaries
-          echo "upstream_summary<<EOF" >> $GITHUB_OUTPUT
-          git log --oneline "main..${UPSTREAM_REF}" --no-merges 2>/dev/null | head -10 >> $GITHUB_OUTPUT || echo "No commits" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "upstream_summary<<EOF" >> "$GITHUB_OUTPUT"
+          git log --oneline "main..${UPSTREAM_REF}" --no-merges 2>/dev/null | head -10 >> "$GITHUB_OUTPUT" || echo "No commits" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
           
-          echo "quotio_summary<<EOF" >> $GITHUB_OUTPUT
-          git log --oneline "$QUOTIO_REF" --since="7 days ago" 2>/dev/null | head -10 >> $GITHUB_OUTPUT || echo "No commits" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "quotio_summary<<EOF" >> "$GITHUB_OUTPUT"
+          git log --oneline "$QUOTIO_REF" --since="7 days ago" 2>/dev/null | head -10 >> "$GITHUB_OUTPUT" || echo "No commits" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
       
       - name: Create or update issue
         if: steps.check.outputs.upstream_commits > 0 || steps.check.outputs.quotio_commits > 0
