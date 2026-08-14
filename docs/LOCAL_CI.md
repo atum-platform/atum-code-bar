@@ -1,19 +1,25 @@
 # Local CI
 
-The scheduled upstream monitor runs on the private Anka Ventures Labs ARM64 Mac
-Mini through these labels:
+Portable CI runs on the private Anka Ventures Labs runner pool through these
+labels:
 
 ```yaml
-runs-on: [self-hosted, macOS, ARM64, mac-mini, local-ci]
+runs-on: [self-hosted, portable-ci, local-ci]
 ```
 
-It is serialized with a workflow-level concurrency group and does not mutate
-the persistent runner's global Git configuration.
+The router prefers the ASUS Linux runner, exposes the MacBook after the primary
+has remained busy for the fallback delay, and then exposes the Mac Mini. The
+scheduled upstream monitor is serialized and does not mutate a persistent
+runner's global Git configuration. Main CI uses the same pool for change
+detection, lint, and the final aggregate gate. Fork-origin pull requests are
+rejected before assignment to a self-hosted runner.
 
-The main CI, fork build, and release workflows remain GitHub-hosted. They
-currently require Ubuntu packages, Linux musl build environments, Xcode 26, or
-Intel macOS and are not compatible with the Mini's macOS 26 / Xcode 15.4
-toolchain. Reassess those jobs when matching isolated runners exist.
+Swift/Xcode tests, Linux ARM builds, Linux musl packaging, the fork app build,
+and release workflows remain GitHub-hosted. They require exact architectures,
+privileged package installation, or hosted Xcode images and are not part of the
+portable lane. Reassess those jobs when matching isolated runners exist.
 
-Verification for this migration is `actionlint` plus one manual upstream monitor
-run reporting runner `mac-mini-anka-labs`.
+Verification is `actionlint -ignore SC2016` plus a pull-request CI run showing
+portable jobs on `ubuntu-asus-anka-labs` while exact-platform jobs retain their
+existing hosts. SC2016 findings are pre-existing informational reports for
+literal Markdown format strings in shell summaries.

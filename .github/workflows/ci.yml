@@ -17,7 +17,8 @@ env:
 
 jobs:
   changes:
-    runs-on: ubuntu-24.04
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, portable-ci, local-ci]
     timeout-minutes: 5
     outputs:
       macos-tests: ${{ steps.macos-tests.outputs.macos-tests }}
@@ -91,7 +92,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   lint:
-    runs-on: ubuntu-24.04
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, portable-ci, local-ci]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -210,14 +212,14 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   lint-build-test:
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, portable-ci, local-ci]
     timeout-minutes: 5
     needs:
       - changes
       - lint
       - swift-test-macos
       - build-linux-musl-cli
-    if: ${{ always() && !cancelled() }}
+    if: ${{ always() && !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
