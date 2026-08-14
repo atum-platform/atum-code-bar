@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   check-upstreams:
-    runs-on: [self-hosted, macOS, ARM64, mac-mini, local-ci]
+    runs-on: [self-hosted, macOS, ARM64, local-ci]
     permissions:
       issues: write
       contents: read
