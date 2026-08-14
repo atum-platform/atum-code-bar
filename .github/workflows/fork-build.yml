@@ -11,25 +11,33 @@ concurrency:
 
 jobs:
   focused-test-and-package:
-    runs-on: macos-26
+    runs-on: [self-hosted, macOS, ARM64, macbook, local-ci]
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          clean: false
 
       - name: Select Xcode 26.3 or 26.2
         shell: bash
         run: |
           set -euo pipefail
-          for candidate in /Applications/Xcode_26.3.app /Applications/Xcode_26.2.app; do
-            if [[ -d "$candidate" ]]; then
-              sudo xcode-select -s "${candidate}/Contents/Developer"
-              echo "DEVELOPER_DIR=${candidate}/Contents/Developer" >> "$GITHUB_ENV"
+          selected_developer_dir=""
+          for candidate in /Applications/Xcode_26.3.app /Applications/Xcode_26.2.app /Applications/Xcode.app; do
+            developer_dir="${candidate}/Contents/Developer"
+            if [[ -d "$developer_dir" ]] \
+              && [[ "$(DEVELOPER_DIR="$developer_dir" /usr/bin/xcodebuild -version)" == Xcode\ 26.* ]]; then
+              selected_developer_dir="$developer_dir"
               break
             fi
           done
-          [[ "$(/usr/bin/xcodebuild -version)" == Xcode\ 26.* ]]
-          /usr/bin/xcodebuild -version
-          swift --version
+          [[ -n "$selected_developer_dir" ]]
+          echo "DEVELOPER_DIR=$selected_developer_dir" >> "$GITHUB_ENV"
+          DEVELOPER_DIR="$selected_developer_dir" /usr/bin/xcodebuild -version
+          DEVELOPER_DIR="$selected_developer_dir" /usr/bin/swift --version
+
+      - name: Test first-launch usage tracking
+        run: swift test --filter 'ProviderDetectionPolicyTests|SettingsStoreRefreshDefaultTests|KimiSettingsReaderTests'
 
       - name: Test refresh request context
         run: swift test --filter ProviderRefreshRequestContextTests
