@@ -6,8 +6,8 @@ Date: 2026-08-14
 
 - Routed CI change detection and the aggregate gate through the `portable-ci`
   capability.
-- Routed lint through ASUS's rootless `container-ci` capability using an Ubuntu
-  24.04 job container.
+- Routed lint through ASUS's rootless `container-ci` capability using the
+  digest-pinned official Swift 6.3.3 Noble job container.
 - Routed scheduled upstream monitoring through the same ASUS-first pool.
 - Added explicit fork-origin rejection to portable pull-request jobs.
 - Registered the shared `portable-ci` and `container-ci` runner labels with the
@@ -21,12 +21,12 @@ privileged package installation, or hosted Apple toolchains that the portable
 pool does not promise.
 
 The host's Ubuntu 26.04 libxml2 ABI is newer than the ABI expected by the pinned
-SwiftLint release. The lint container preserves the job's prior Ubuntu 24.04
-contract without adding legacy libraries or sudo access to the host. The
-minimal image installs Node 22 through commit-pinned `actions/setup-node` before
-the lint tool bootstrap and installs Ubuntu's `libxml2` compatibility package
-for the pinned SwiftLint binary. Python 3 supports the repository's portable
-packaging-contract checks.
+SwiftLint release. A generic Ubuntu 24.04 container supplied libxml2 but not the
+matching SourceKit runtime, so SwiftLint still could not start. The official
+Swift 6.3.3 Noble image supplies both dependencies without adding legacy
+libraries or sudo access to the host. Its digest is pinned for reproducibility.
+The job installs Node 22 through commit-pinned `actions/setup-node`; Python 3
+supports the repository's portable packaging-contract checks.
 
 ## Verification
 

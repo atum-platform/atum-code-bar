@@ -94,10 +94,10 @@ jobs:
   lint:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, Linux, X64, container-ci, local-ci]
-    container: ubuntu:24.04
+    container: swift@sha256:69bf1f0281e13d82c9e49d67c2dd1dcc8c00bad738c860f4323d7078787ec8ea # swift:6.3.3-noble
     timeout-minutes: 10
     steps:
-      - name: Prepare Ubuntu toolchain
+      - name: Prepare lint toolchain
         run: |
           apt-get update
           apt-get install -y ca-certificates curl git libxml2 python3 unzip
