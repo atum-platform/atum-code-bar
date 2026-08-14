@@ -1,6 +1,8 @@
 self-hosted-runner:
   labels:
     - mac-mini
+    - portable-ci
+    - container-ci
     - local-ci
 
 config-variables: null

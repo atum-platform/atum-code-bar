@@ -17,7 +17,8 @@ env:
 
 jobs:
   changes:
-    runs-on: ubuntu-24.04
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, portable-ci, local-ci]
     timeout-minutes: 5
     outputs:
       macos-tests: ${{ steps.macos-tests.outputs.macos-tests }}
@@ -91,10 +92,22 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   lint:
-    runs-on: ubuntu-24.04
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, Linux, X64, container-ci, local-ci]
+    container: swift@sha256:69bf1f0281e13d82c9e49d67c2dd1dcc8c00bad738c860f4323d7078787ec8ea # swift:6.3.3-noble
     timeout-minutes: 10
     steps:
+      - name: Prepare lint toolchain
+        run: |
+          apt-get update
+          apt-get install -y ca-certificates curl git libxml2 python3 unzip
+
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
 
       - name: Install lint tools
         run: ./Scripts/install_lint_tools.sh swiftlint oxlint oxfmt typescript
@@ -210,14 +223,14 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   lint-build-test:
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, portable-ci, local-ci]
     timeout-minutes: 5
     needs:
       - changes
       - lint
       - swift-test-macos
       - build-linux-musl-cli
-    if: ${{ always() && !cancelled() }}
+    if: ${{ always() && !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
