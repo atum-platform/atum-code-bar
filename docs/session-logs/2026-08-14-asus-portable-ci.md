@@ -25,7 +25,8 @@ SwiftLint release. The lint container preserves the job's prior Ubuntu 24.04
 contract without adding legacy libraries or sudo access to the host. The
 minimal image installs Node 22 through commit-pinned `actions/setup-node` before
 the lint tool bootstrap and installs Ubuntu's `libxml2` compatibility package
-for the pinned SwiftLint binary.
+for the pinned SwiftLint binary. Python 3 supports the repository's portable
+packaging-contract checks.
 
 ## Verification
 
