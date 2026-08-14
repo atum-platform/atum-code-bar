@@ -43,6 +43,54 @@ struct SettingsStoreRefreshDefaultTests {
     }
 
     @Test
+    func `fresh install enables launch at login and persists the choice`() throws {
+        let suite = "SettingsStoreRefreshDefaultTests-fresh-login"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        let configStore = testConfigStore(suiteName: suite)
+
+        let store = self.makeStore(defaults: defaults, configStore: configStore)
+
+        #expect(store.launchAtLogin)
+        #expect(defaults.bool(forKey: "launchAtLogin"))
+
+        defaults.set(true, forKey: "providerDetectionCompleted")
+        let reloaded = self.makeStore(defaults: defaults, configStore: configStore)
+        #expect(reloaded.launchAtLogin)
+    }
+
+    @Test(arguments: [true, false])
+    func `existing launch at login choice remains authoritative`(enabled: Bool) throws {
+        let suite = "SettingsStoreRefreshDefaultTests-existing-login-\(enabled)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        defaults.set(true, forKey: "providerDetectionCompleted")
+        defaults.set(enabled, forKey: "launchAtLogin")
+
+        let store = self.makeStore(
+            defaults: defaults,
+            configStore: testConfigStore(suiteName: suite))
+
+        #expect(store.launchAtLogin == enabled)
+        #expect(defaults.bool(forKey: "launchAtLogin") == enabled)
+    }
+
+    @Test(arguments: PreviousLaunchMarker.allCases)
+    func `legacy unset launch at login remains disabled`(marker: PreviousLaunchMarker) throws {
+        let suite = "SettingsStoreRefreshDefaultTests-legacy-login-\(marker)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        marker.seed(defaults)
+
+        let store = self.makeStore(
+            defaults: defaults,
+            configStore: testConfigStore(suiteName: suite))
+
+        #expect(!store.launchAtLogin)
+        #expect(defaults.object(forKey: "launchAtLogin") as? Bool == false)
+    }
+
+    @Test
     func `unrecognized refresh frequency keeps the legacy fallback`() throws {
         let suite = "SettingsStoreRefreshDefaultTests-invalid"
         let defaults = try #require(UserDefaults(suiteName: suite))

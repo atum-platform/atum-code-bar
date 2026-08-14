@@ -79,6 +79,12 @@ public enum KimiSettingsReader {
         return self.cleaned(credential.accessToken) != nil || self.cleaned(credential.refreshToken) != nil
     }
 
+    public static func hasOfficialKimiCLI(
+        environment: [String: String] = ProcessInfo.processInfo.environment) -> Bool
+    {
+        self.officialKimiCLIBinary(environment: environment) != nil
+    }
+
     static func kimiCodeIdentityHeaders(environment: [String: String]) -> [String: String] {
         let deviceID = self.kimiCodeDeviceID(environment: environment)
         let version = self.asciiHeaderValue(
@@ -103,11 +109,7 @@ public enum KimiSettingsReader {
     }
 
     static func refreshUsingOfficialKimiCLI(environment: [String: String]) async throws {
-        let home = self.kimiCodeHomeURL(environment: environment)
-        let homeBinary = home.appendingPathComponent("bin/kimi", isDirectory: false).path
-        let binary = FileManager.default.isExecutableFile(atPath: homeBinary)
-            ? homeBinary
-            : TTYCommandRunner.which("kimi")
+        let binary = self.officialKimiCLIBinary(environment: environment)
         guard let binary else { throw KimiAPIError.expiredCodeCredential }
         _ = try await SubprocessRunner.run(
             binary: binary,
@@ -117,6 +119,15 @@ public enum KimiSettingsReader {
             maxOutputBytes: 32 * 1024,
             standardInput: FileHandle.nullDevice,
             label: "Kimi credential refresh")
+    }
+
+    private static func officialKimiCLIBinary(environment: [String: String]) -> String? {
+        let homeBinary = self.kimiCodeHomeURL(environment: environment)
+            .appendingPathComponent("bin/kimi", isDirectory: false).path
+        if FileManager.default.isExecutableFile(atPath: homeBinary) {
+            return homeBinary
+        }
+        return TTYCommandRunner.which("kimi")
     }
 
     fileprivate static func kimiCodeCredential(environment: [String: String]) -> KimiCodeOAuthCredential? {

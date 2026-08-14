@@ -212,6 +212,11 @@ Wondering if CodexBar scans your disk? It doesn’t crawl your filesystem; it re
 - Install/sign in to provider sources you rely on (CLIs, browser cookies, OAuth/device flow, API keys, or local app/config files).
 - Optional: set OpenAI cookies (Automatic or Manual) for Codex dashboard extras.
 
+On a fresh install, CodexBar enables launch at login and automatically enables providers backed by durable local
+credentials. This includes Codex, Claude, and an authenticated Kimi Code CLI. Provider tokens remain in each
+provider's own machine-local credential store; CodexBar does not copy credentials between machines. Existing users'
+provider toggles and launch-at-login choices remain authoritative.
+
 ## Build from source
 Requires macOS 14+ and Swift 6.2+.
 

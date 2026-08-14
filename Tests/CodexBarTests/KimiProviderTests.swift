@@ -183,6 +183,19 @@ struct KimiSettingsReaderTests {
     }
 
     @Test
+    func `finds official CLI in the Kimi Code home`() throws {
+        let home = try makeTemporaryKimiCodeHome()
+        defer { try? FileManager.default.removeItem(at: home) }
+        let bin = home.appendingPathComponent("bin", isDirectory: true)
+        try FileManager.default.createDirectory(at: bin, withIntermediateDirectories: true)
+        let executable = bin.appendingPathComponent("kimi")
+        try Data("#!/bin/sh\n".utf8).write(to: executable)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: executable.path)
+
+        #expect(KimiSettingsReader.hasOfficialKimiCLI(environment: ["KIMI_CODE_HOME": home.path]))
+    }
+
+    @Test
     func `reuses fresh CLI credential without modifying it`() throws {
         let home = try makeTemporaryKimiCodeHome()
         defer { try? FileManager.default.removeItem(at: home) }

@@ -432,7 +432,11 @@ extension SettingsStore {
         let adaptiveActivityScanConsent = Self.loadAdaptiveActivityScanConsent(userDefaults: userDefaults)
         let refreshAllProvidersOnMenuOpen = userDefaults.object(
             forKey: "refreshAllProvidersOnMenuOpen") as? Bool ?? false
-        let launchAtLogin = userDefaults.object(forKey: "launchAtLogin") as? Bool ?? false
+        let storedLaunchAtLogin = userDefaults.object(forKey: "launchAtLogin") as? Bool
+        let launchAtLogin = storedLaunchAtLogin ?? !hadPreviousInstallationState
+        if storedLaunchAtLogin == nil {
+            userDefaults.set(launchAtLogin, forKey: "launchAtLogin")
+        }
         let debugMenuEnabled = userDefaults.object(forKey: "debugMenuEnabled") as? Bool ?? false
         let debugDisableKeychainAccess = Self.loadDebugDisableKeychainAccess(userDefaults: userDefaults)
         let debugFileLoggingEnabled = userDefaults.object(forKey: "debugFileLoggingEnabled") as? Bool ?? false

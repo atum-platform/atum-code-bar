@@ -7,6 +7,8 @@ enum ProviderDetectionPolicy {
         let codexCLIInstalled: Bool
         let claudeCLIInstalled: Bool
         let claudeDesktopInstalled: Bool
+        let kimiCLIInstalled: Bool
+        let kimiConfigured: Bool
         let geminiCLIInstalled: Bool
         let geminiConfigured: Bool
         let antigravityAvailable: Bool
@@ -20,6 +22,9 @@ enum ProviderDetectionPolicy {
         }
         if signals.claudeCLIInstalled || signals.claudeDesktopInstalled {
             enabled.insert(.claude)
+        }
+        if signals.kimiCLIInstalled, signals.kimiConfigured {
+            enabled.insert(.kimi)
         }
         if signals.geminiCLIInstalled, signals.geminiConfigured {
             enabled.insert(.gemini)
@@ -53,6 +58,8 @@ extension SettingsStore {
         let claudeCLIInstalled = BinaryLocator.resolveClaudeBinary() != nil
         let claudeDesktopInstalled = NSWorkspace.shared.urlForApplication(
             withBundleIdentifier: "com.anthropic.claudefordesktop") != nil
+        let kimiCLIInstalled = KimiSettingsReader.hasOfficialKimiCLI()
+        let kimiConfigured = KimiSettingsReader.hasKimiCodeCredential()
         let geminiCLIInstalled = BinaryLocator.resolveGeminiBinary() != nil
         let geminiConfigured = FileManager.default.fileExists(
             atPath: FileManager.default.homeDirectoryForCurrentUser
@@ -66,6 +73,8 @@ extension SettingsStore {
             codexCLIInstalled: codexCLIInstalled,
             claudeCLIInstalled: claudeCLIInstalled,
             claudeDesktopInstalled: claudeDesktopInstalled,
+            kimiCLIInstalled: kimiCLIInstalled,
+            kimiConfigured: kimiConfigured,
             geminiCLIInstalled: geminiCLIInstalled,
             geminiConfigured: geminiConfigured,
             antigravityAvailable: antigravityRunning || antigravityLoggedIn))
@@ -76,6 +85,8 @@ extension SettingsStore {
                 "codexCLIInstalled": codexCLIInstalled ? "1" : "0",
                 "claudeCLIInstalled": claudeCLIInstalled ? "1" : "0",
                 "claudeDesktopInstalled": claudeDesktopInstalled ? "1" : "0",
+                "kimiCLIInstalled": kimiCLIInstalled ? "1" : "0",
+                "kimiConfigured": kimiConfigured ? "1" : "0",
                 "geminiCLIInstalled": geminiCLIInstalled ? "1" : "0",
                 "geminiConfigured": geminiConfigured ? "1" : "0",
                 "antigravityRunning": antigravityRunning ? "1" : "0",
@@ -86,6 +97,7 @@ extension SettingsStore {
             metadata: [
                 "codex": enabledProviders.contains(.codex) ? "1" : "0",
                 "claude": enabledProviders.contains(.claude) ? "1" : "0",
+                "kimi": enabledProviders.contains(.kimi) ? "1" : "0",
                 "gemini": enabledProviders.contains(.gemini) ? "1" : "0",
                 "antigravity": enabledProviders.contains(.antigravity) ? "1" : "0",
             ])
@@ -95,6 +107,9 @@ extension SettingsStore {
         }
         self.updateProviderConfig(provider: .claude) { entry in
             entry.enabled = enabledProviders.contains(.claude)
+        }
+        self.updateProviderConfig(provider: .kimi) { entry in
+            entry.enabled = enabledProviders.contains(.kimi)
         }
         self.updateProviderConfig(provider: .gemini) { entry in
             entry.enabled = enabledProviders.contains(.gemini)
