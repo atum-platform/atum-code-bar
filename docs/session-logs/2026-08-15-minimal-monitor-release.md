@@ -33,3 +33,7 @@ the official `kimi login` flow when the saved token is expired or near expiry,
 coalesces concurrent refreshes, and then rereads the credential file. If that
 official flow fails, the monitor keeps an enabled provider visible in Overview
 with actionable error text rather than silently hiding it.
+
+The refresh implementation also preserves the endpoint-override guard: custom
+Kimi API/OAuth hosts stay explicit and do not accidentally trigger the official
+Kimi login flow.
