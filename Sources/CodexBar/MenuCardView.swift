@@ -1333,18 +1333,22 @@ extension UsageMenuCardView.Model {
             snapshot: snapshot,
             input: input,
             percentStyle: percentStyle))
-        if input.provider == .kilo || input.provider == .kimi,
-           metrics.contains(where: { $0.id == "primary" }),
-           metrics.contains(where: { $0.id == "secondary" })
-        {
-            metrics.sort { lhs, rhs in
-                let primarySecondaryOrder: [String: Int] = [
-                    "secondary": 0,
-                    "primary": 1,
-                ]
-                return (primarySecondaryOrder[lhs.id] ?? Int.max) < (primarySecondaryOrder[rhs.id] ?? Int.max)
+        // Overview is a compact monitor: show the long weekly window first,
+        // then the short session window, then provider-specific extras.
+        // Preserve the existing order among extras so provider-specific rows
+        // remain predictable.
+        metrics = metrics.enumerated().sorted { lhs, rhs in
+            let rank: (String) -> Int = { id in
+                switch id {
+                case "secondary": 0
+                case "primary": 1
+                default: 2
+                }
             }
-        }
+            let lhsRank = rank(lhs.element.id)
+            let rhsRank = rank(rhs.element.id)
+            return lhsRank == rhsRank ? lhs.offset < rhs.offset : lhsRank < rhsRank
+        }.map(\.element)
 
         if let codexProjection = input.codexProjection,
            codexProjection.supplementalMetrics.contains(.codeReview),
