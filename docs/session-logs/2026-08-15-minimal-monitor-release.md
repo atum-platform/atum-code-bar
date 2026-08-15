@@ -16,3 +16,11 @@ The compact Overview contract is: render at most three rows per provider, keep
 the provider header compact, order weekly before session before extras, and
 default Overview to all currently enabled providers so a newly enabled Kimi
 row is not silently omitted by stale selection state.
+
+Credential ownership is provider-specific: Claude is read from the Claude CLI
+credential source, while Kimi is read from Kimi Code CLI's
+`~/.kimi-code/credentials/kimi-code.json`. CodexBar intentionally does not
+refresh Kimi-owned OAuth credentials. An expired Kimi token therefore requires
+`kimi login`; the monitor now keeps an enabled provider visible in Overview
+even when its credential is expired, so the failure is actionable rather than
+silently hiding the provider.
