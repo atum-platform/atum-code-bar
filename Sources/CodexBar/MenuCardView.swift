@@ -1338,7 +1338,7 @@ extension UsageMenuCardView.Model {
         // by the actual window duration instead of primary/secondary ids:
         // providers are free to map those generic lanes differently.
         metrics = metrics.enumerated().sorted { lhs, rhs in
-            let window(for metricID: String) -> RateWindow? {
+            func window(for metricID: String) -> RateWindow? {
                 switch metricID {
                 case "primary": snapshot.primary
                 case "secondary": snapshot.secondary

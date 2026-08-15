@@ -22,6 +22,9 @@ other windows), not the provider-neutral `primary`/`secondary` field names.
 This matters for Kimi, whose primary snapshot lane is weekly and secondary
 lane is its five-hour session quota.
 
+The ordering helper is covered by the production MacBook build before
+installation; the Mac mini's older Xcode cannot compile the Swift 6.2 package.
+
 Credential ownership is provider-specific: Claude is read from the Claude CLI
 credential source, while Kimi is read from Kimi Code CLI's
 `~/.kimi-code/credentials/kimi-code.json`. CodexBar intentionally does not
