@@ -28,7 +28,8 @@ installation; the Mac mini's older Xcode cannot compile the Swift 6.2 package.
 Credential ownership is provider-specific: Claude is read from the Claude CLI
 credential source, while Kimi is read from Kimi Code CLI's
 `~/.kimi-code/credentials/kimi-code.json`. CodexBar intentionally does not
-refresh Kimi-owned OAuth credentials. An expired Kimi token therefore requires
-`kimi login`; the monitor now keeps an enabled provider visible in Overview
-even when its credential is expired, so the failure is actionable rather than
-silently hiding the provider.
+refresh Kimi-owned OAuth credentials itself. The durable Kimi path now invokes
+the official `kimi login` flow when the saved token is expired or near expiry,
+coalesces concurrent refreshes, and then rereads the credential file. If that
+official flow fails, the monitor keeps an enabled provider visible in Overview
+with actionable error text rather than silently hiding it.
