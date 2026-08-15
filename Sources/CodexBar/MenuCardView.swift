@@ -1334,16 +1334,23 @@ extension UsageMenuCardView.Model {
             input: input,
             percentStyle: percentStyle))
         // Overview is a compact monitor: show the long weekly window first,
-        // then the short session window, then provider-specific extras.
-        // Preserve the existing order among extras so provider-specific rows
-        // remain predictable.
+        // then the short session window, then provider-specific extras. Sort
+        // by the actual window duration instead of primary/secondary ids:
+        // providers are free to map those generic lanes differently.
         metrics = metrics.enumerated().sorted { lhs, rhs in
-            let rank: (String) -> Int = { id in
-                switch id {
-                case "secondary": 0
-                case "primary": 1
-                default: 2
+            let window(for metricID: String) -> RateWindow? {
+                switch metricID {
+                case "primary": snapshot.primary
+                case "secondary": snapshot.secondary
+                case "tertiary": snapshot.tertiary
+                default: snapshot.extraRateWindows?.first { $0.id == metricID }?.window
                 }
+            }
+            let rank: (String) -> Int = { id in
+                guard let minutes = window(for: id)?.windowMinutes else { return 2 }
+                if minutes == 7 * 24 * 60 { return 0 }
+                if (60...(12 * 60)).contains(minutes) { return 1 }
+                return 2
             }
             let lhsRank = rank(lhs.element.id)
             let rhsRank = rank(rhs.element.id)

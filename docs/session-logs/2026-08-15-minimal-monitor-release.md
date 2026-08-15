@@ -17,6 +17,11 @@ the provider header compact, order weekly before session before extras, and
 default Overview to all currently enabled providers so a newly enabled Kimi
 row is not silently omitted by stale selection state.
 
+Metric ordering is based on each window's duration (weekly, then session, then
+other windows), not the provider-neutral `primary`/`secondary` field names.
+This matters for Kimi, whose primary snapshot lane is weekly and secondary
+lane is its five-hour session quota.
+
 Credential ownership is provider-specific: Claude is read from the Claude CLI
 credential source, while Kimi is read from Kimi Code CLI's
 `~/.kimi-code/credentials/kimi-code.json`. CodexBar intentionally does not
