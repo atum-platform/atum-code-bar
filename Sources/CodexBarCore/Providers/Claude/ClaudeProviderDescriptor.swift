@@ -196,6 +196,7 @@ public enum ClaudeProviderDescriptor {
                     return series
                 },
                 secondaryGloballyCapsPrimary: true,
+                primaryBindingQuotaLanes: [.secondary],
                 menuCard: ProviderMenuCardPresentation(
                     costVisibilityResolver: { context in
                         context.showOptionalUsage || context.snapshot?.loginMethod(for: .claude) == "Admin API"
@@ -528,6 +529,7 @@ struct ClaudeOAuthFetchStrategy: ProviderFetchStrategy {
     #if DEBUG
     @TaskLocal static var nonInteractiveCredentialRecordOverride: ClaudeOAuthCredentialRecord?
     @TaskLocal static var claudeCLIAvailableOverride: Bool?
+    @TaskLocal static var directCredentialIsMissingOverride: Bool?
     #endif
 
     private func loadNonInteractiveCredentialRecord(environment: [String: String]) -> ClaudeOAuthCredentialRecord? {
@@ -546,6 +548,9 @@ struct ClaudeOAuthFetchStrategy: ProviderFetchStrategy {
 
     func directCredentialIsMissing(environment: [String: String]) -> Bool {
         #if DEBUG
+        if let override = Self.directCredentialIsMissingOverride {
+            return override
+        }
         if Self.nonInteractiveCredentialRecordOverride != nil {
             return false
         }
@@ -966,11 +971,18 @@ struct ClaudeCLIFetchStrategy: ProviderFetchStrategy {
     let hasWebFallback: Bool
 
     func isAvailable(_ context: ProviderFetchContext) async -> Bool {
-        // Claude's "auth status" command is an opaque child process that may invoke /usr/bin/security itself.
-        // CodexBar cannot impose its no-UI policy on that child, so background Auto refresh must not launch it
-        // unless the user explicitly opted into Keychain access for background work.
-        let isBackgroundAppRefresh = context.runtime == .app
-            && ProviderInteractionContext.current == .background
+        guard let binary = ClaudeCLIResolver.resolvedBinaryPath(environment: context.env) else { return false }
+
+        if context.runtime == .cli {
+            // A CodexBarCLI invocation is already an explicit user action. Preserve the definitive logged-out guard,
+            // but do not let an unavailable credential-reading `auth status` child override the owner CLI's ability
+            // to provide usage. The app keeps the stricter marker policy below for prompt-free scheduled refreshes.
+            return await ClaudeCLIAuthStatusProbe.authenticationStatus(
+                binary: binary,
+                environment: context.env) != .loggedOut
+        }
+
+        let isBackgroundAppRefresh = ProviderInteractionContext.current == .background
         // Explicit OAuth may recover through the interactive owner CLI only from a user action. A scheduled
         // refresh with missing credentials must remain on the selected OAuth authority and fail without UI.
         if isBackgroundAppRefresh, context.sourceMode == .oauth {
@@ -983,21 +995,35 @@ struct ClaudeCLIFetchStrategy: ProviderFetchStrategy {
             // `claude auth status`. Background Auto therefore reuses only availability established by a
             // successful user-initiated CLI fetch in this process. The narrow exception is the owner usage
             // fetch when Keychain access is explicitly disabled; version/auth children retain the global gate.
-            guard let binary = ClaudeCLIResolver.resolvedBinaryPath(environment: context.env) else { return false }
             return ClaudeCLIBackgroundAvailability.allowsBackgroundAutoUsageFetch(
                 binary: binary,
-                environment: context.env)
+                environment: context.env,
+                oauthCredentialsConfirmedAbsent: {
+                    ClaudeOAuthFetchStrategy().directCredentialIsMissing(environment: context.env)
+                })
         }
 
-        // The interactive Claude REPL can open browser OAuth when it starts logged out. CLI-runtime paths
-        // establish authentication through the noninteractive status command first. App user
-        // actions intentionally launch the interactive path directly so the user can complete authentication.
-        guard let binary = ClaudeCLIResolver.resolvedBinaryPath(environment: context.env) else { return false }
-        guard context.runtime == .cli else { return true }
-        return await ClaudeCLIAuthStatusProbe.isLoggedIn(binary: binary, environment: context.env)
+        // App user actions intentionally launch the interactive path directly so the user can complete authentication.
+        return true
     }
 
     func fetch(_ context: ProviderFetchContext) async throws -> ProviderFetchResult {
+        let binary = ClaudeCLIResolver.resolvedBinaryPath(environment: context.env)
+        let throttleKey = binary.flatMap {
+            ClaudeCLIUsageSpawnThrottle.key(
+                binary: $0,
+                environment: context.env,
+                useWebExtras: self.useWebExtras,
+                includePrepaidBalance: self.includePrepaidBalance && context.includeOptionalUsage)
+        }
+        if context.runtime == .app,
+           ProviderInteractionContext.current == .background,
+           !context.claudeOwnerCLIRecoveryOnly,
+           let throttleKey,
+           let cached = ClaudeCLIUsageSpawnThrottle.cachedResult(for: throttleKey)
+        {
+            return cached
+        }
         let keepAlive = context.settings?.debugKeepCLISessionsAlive ?? false
         let fetcher = ClaudeUsageFetcher(
             browserDetection: browserDetection,
@@ -1009,7 +1035,6 @@ struct ClaudeCLIFetchStrategy: ProviderFetchStrategy {
             webExtrasTimeout: context.webTimeout,
             includePrepaidBalance: self.includePrepaidBalance && context.includeOptionalUsage,
             keepCLISessionsAlive: keepAlive)
-        let binary = ClaudeCLIResolver.resolvedBinaryPath(environment: context.env)
         let backgroundAvailabilityMarker = binary.flatMap {
             ClaudeCLIBackgroundAvailability.captureMarker(binary: $0, environment: context.env)
         }
@@ -1017,6 +1042,9 @@ struct ClaudeCLIFetchStrategy: ProviderFetchStrategy {
         do {
             usage = try await fetcher.loadLatestUsage(model: "sonnet")
         } catch {
+            if Task.isCancelled || ClaudeOAuthFetchError.isCancellation(error) {
+                throw error
+            }
             if let backgroundAvailabilityMarker {
                 ClaudeCLIBackgroundAvailability.revoke(backgroundAvailabilityMarker)
             }
@@ -1028,11 +1056,15 @@ struct ClaudeCLIFetchStrategy: ProviderFetchStrategy {
         {
             ClaudeCLIBackgroundAvailability.establish(backgroundAvailabilityMarker)
         }
-        return self.makeResult(
+        let result = self.makeResult(
             // The PTY /usage panel exposes rendered percentages only, so CLI-sourced data carries an
             // explicit degraded-fidelity marker that the card surfaces as "via Claude CLI".
             usage: ClaudeOAuthFetchStrategy.snapshot(from: usage, dataConfidence: .percentOnly),
             sourceLabel: "claude")
+        if let throttleKey {
+            ClaudeCLIUsageSpawnThrottle.record(result, for: throttleKey)
+        }
+        return result
     }
 
     func shouldFallback(on error: Error, context: ProviderFetchContext) -> Bool {
@@ -1100,10 +1132,43 @@ enum ClaudeCLIBackgroundAvailability {
             || ClaudeOAuthKeychainPromptPreference.storedMode() == .always
     }
 
-    static func allowsBackgroundAutoUsageFetch(binary: String, environment: [String: String]) -> Bool {
+    /// - Parameter oauthCredentialsConfirmedAbsent: A prompt-free, no-UI probe proving the OAuth step ahead
+    ///   of this one is durably dead (not merely denied). Consulted lazily, only when no marker exists at
+    ///   all for this profile — a marker that *is* established but denied by prompt policy or Keychain-
+    ///   disable revocation is a deliberate, already-adjudicated gate that this never second-guesses.
+    static func allowsBackgroundAutoUsageFetch(
+        binary: String,
+        environment: [String: String],
+        oauthCredentialsConfirmedAbsent: () -> Bool = { false }) -> Bool
+    {
         guard ProviderInteractionContext.current == .background else { return true }
         guard KeychainAccessGate.isExplicitlyDisabled else {
-            return self.allowsOpaqueChildExecution(binary: binary, environment: environment)
+            if self.allowsOpaqueChildExecution(binary: binary, environment: environment) {
+                return true
+            }
+            guard !self.isEstablished(binary: binary, environment: environment) else { return false }
+            // The deadlock-breaker below requires a profile CodexBar can actually identify. Without one,
+            // a failed attempt could never be recorded via `revoke()` (which needs a marker), so nothing
+            // would ever bound repeated background launches — the same fail-closed contract
+            // `identifiedSessionScope` documents for background work in general.
+            guard let marker = self.captureMarker(binary: binary, environment: environment) else { return false }
+            // A marker that was established and then revoked by a failed foreground fetch is a deliberate,
+            // already-adjudicated "not available right now" outcome — `isEstablished` alone can't see it,
+            // since revocation removes the marker from the established set. The deadlock-breaker below
+            // exists only for profiles that never reached user-initiated status at all; a revoked profile
+            // already tried and must wait for the next foreground success, not be re-permitted here.
+            if self.store.isRevoked(marker) {
+                return false
+            }
+            // The marker gate above never gets a chance to be set when the OAuth step ahead of this one
+            // is durably dead: it is only recorded by a prior *successful* user-initiated CLI fetch, and a
+            // scheduled refresh never reaches user-initiated status. Breaking that deadlock here mirrors
+            // explicit OAuth mode's own absence check (`ClaudeOAuthPlanningAvailability`). A confirmed
+            // absence of CodexBar-readable credentials does not by itself prove the interactive CLI is
+            // safe to launch unattended, so this exception still requires the same explicit background
+            // opt-in (`.always` prompt policy) that `allowsOpaqueChildExecution` requires above.
+            guard ClaudeOAuthKeychainPromptPreference.storedMode() == .always else { return false }
+            return oauthCredentialsConfirmedAbsent()
         }
         // Disable Keychain explicitly permits one owner-CLI usage attempt on a cold profile. A failed attempt
         // records revocation below, preventing each background timer tick from retrying until a foreground success.
