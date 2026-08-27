@@ -9,6 +9,8 @@ struct ProviderDetectionPolicyTests {
             codexCLIInstalled: true,
             claudeCLIInstalled: false,
             claudeDesktopInstalled: true,
+            kimiCLIInstalled: false,
+            kimiConfigured: false,
             geminiCLIInstalled: true,
             geminiConfigured: false,
             antigravityAvailable: false))
@@ -22,6 +24,8 @@ struct ProviderDetectionPolicyTests {
             codexCLIInstalled: false,
             claudeCLIInstalled: false,
             claudeDesktopInstalled: false,
+            kimiCLIInstalled: false,
+            kimiConfigured: false,
             geminiCLIInstalled: true,
             geminiConfigured: true,
             antigravityAvailable: false))
@@ -30,11 +34,28 @@ struct ProviderDetectionPolicyTests {
     }
 
     @Test
+    func `Kimi credentials are enough to discover Kimi Code`() {
+        let enabled = ProviderDetectionPolicy.enabledProviders(signals: .init(
+            codexCLIInstalled: false,
+            claudeCLIInstalled: false,
+            claudeDesktopInstalled: false,
+            kimiCLIInstalled: false,
+            kimiConfigured: true,
+            geminiCLIInstalled: false,
+            geminiConfigured: false,
+            antigravityAvailable: false))
+
+        #expect(enabled == [.kimi])
+    }
+
+    @Test
     func `Codex remains the fallback when no provider source is available`() {
         let enabled = ProviderDetectionPolicy.enabledProviders(signals: .init(
             codexCLIInstalled: false,
             claudeCLIInstalled: false,
             claudeDesktopInstalled: false,
+            kimiCLIInstalled: false,
+            kimiConfigured: false,
             geminiCLIInstalled: false,
             geminiConfigured: false,
             antigravityAvailable: false))

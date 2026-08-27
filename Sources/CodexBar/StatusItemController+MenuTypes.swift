@@ -67,6 +67,13 @@ struct OverviewMenuCardRowView: View {
                         progressColor: liveModel.progressColor)
                 }
             }
+            if liveModel.provider == .codex, let resetCredits = liveModel.codexResetCredits {
+                Text("\(L("Limit Reset Credits")) · \(resetCredits.text)")
+                    .font(.caption)
+                    .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
         }
         .padding(.horizontal, UsageMenuCardLayout.horizontalPadding)
         .padding(.vertical, UsageMenuCardLayout.headerOnlyVerticalPadding)
@@ -80,16 +87,39 @@ struct OverviewMenuCardRowView: View {
     }
 
     func visibleMetrics(for model: UsageMenuCardView.Model) -> [UsageMenuCardView.Model.Metric] {
+        let orderedMetrics = model.metrics.enumerated().sorted { lhs, rhs in
+            let lhsRank = Self.metricWindowRank(lhs.element)
+            let rhsRank = Self.metricWindowRank(rhs.element)
+            return lhsRank == rhsRank ? lhs.offset < rhs.offset : lhsRank < rhsRank
+        }.map(\.element)
         guard model.provider == .doubao,
-              model.metrics.count > Self.maximumVisibleMetrics,
-              let firstAgentMetric = model.metrics.first(where: { $0.id.hasPrefix("doubao-agent-") })
+              orderedMetrics.count > Self.maximumVisibleMetrics,
+              let firstAgentMetric = orderedMetrics.first(where: { $0.id.hasPrefix("doubao-agent-") })
         else {
-            return Array(model.metrics.prefix(Self.maximumVisibleMetrics))
+            return Array(orderedMetrics.prefix(Self.maximumVisibleMetrics))
         }
-        let codingMetrics = model.metrics
+        let codingMetrics = orderedMetrics
             .filter { !$0.id.hasPrefix("doubao-agent-") }
             .prefix(Self.maximumVisibleMetrics - 1)
         return Array(codingMetrics) + [firstAgentMetric]
+    }
+
+    private static func metricWindowRank(_ metric: UsageMenuCardView.Model.Metric) -> Int {
+        // Kimi's primary slot is its 7-day quota; its secondary slot is the 5-hour quota.
+        if metric.id == "primary", metric.title.localizedCaseInsensitiveContains("day") {
+            return 0
+        }
+        if metric.id == "secondary", metric.title.localizedCaseInsensitiveContains("hour") {
+            return 1
+        }
+        switch metric.id {
+        case "secondary": return 0 // weekly
+        case "primary": return 1 // session
+        default:
+            // Keep Claude's model-scoped weekly lane (for example Fable only) ahead of
+            // lower-priority extras when the compact row has a visible-metric cap.
+            return metric.id.hasPrefix("claude-weekly-scoped-") ? 2 : 3
+        }
     }
 
     func compactStatusText(for model: UsageMenuCardView.Model) -> String {

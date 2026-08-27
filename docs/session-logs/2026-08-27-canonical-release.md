@@ -36,3 +36,13 @@ Claude and Kimi continue to use each machine's own existing credential stores.
 
 The 0.55.1/build 130 application remains the rollback baseline until the new
 artifact passes packaging and dual-machine usage probes.
+## Overview and first-run discovery follow-up
+
+- Removed the inline Usage & Spend summary from the Overview menu so Overview remains a compact quota monitor.
+- Restored a compact Codex “Limit Reset Credits · N available” line when reset credits exist.
+- Normalized Overview metric ordering to weekly first, session second, then other lanes, while preserving provider-specific extra-lane curation.
+- Extended first-run provider discovery to Kimi Code credentials/CLI and made discovery additive; a manual re-run can enable newly found providers without disabling an existing explicit provider choice.
+- Menubar icon investigation: the icon renderer is shared with upstream; the observed visual drift is in the compact merged/provider presentation path and persisted settings, not a missing bundle asset. Final artifact verification remains pending.
+- Follow-up: Overview ordering is semantic rather than slot-based for Kimi (7-day before 5-hour), and Claude scoped weekly lanes such as “Fable only” are prioritized over lower-priority extras when compact rows are capped.
+- Kimi labels now use the same compact vocabulary as its quota windows: “7-day” first and “5-hour” second; other providers continue to use “Weekly” and “Session”.
+- Updated the Kimi menu-card regression expectation for the label-only change; the underlying provider model order remains source-compatible while Overview applies semantic ordering.
