@@ -45,6 +45,7 @@ artifact passes packaging and dual-machine usage probes.
 - Menubar icon investigation: the icon renderer is shared with upstream; the observed visual drift is in the compact merged/provider presentation path and persisted settings, not a missing bundle asset. Final artifact verification remains pending.
 - Follow-up: Overview ordering is semantic rather than slot-based for Kimi (7-day before 5-hour), and Claude scoped weekly lanes such as “Fable only” are prioritized over lower-priority extras when compact rows are capped.
 - Kimi now uses the same displayed vocabulary as every other provider: “Weekly” first and “Session” second; its 7-day/5-hour API semantics remain internal to ordering and pacing.
+- Corrected Kimi’s menu-card slot-to-label mapping so the weekly primary slot is visibly “Weekly” and the 5-hour secondary slot is visibly “Session”.
 - Updated the Kimi menu-card regression expectation for the label-only change; the underlying provider model order remains source-compatible while Overview applies semantic ordering.
 - Packaged and installed the final exact 0.55.2/build 131 arm64 bundle on both Macs; both main binaries verified at SHA-256 `6237c3f331ba958c700ed90e005540f61be688ae82eb53c731bbd08bd4429df6` and deep code-sign verification passed.
 - Post-install probes: Kimi returned live 7-day/5-hour usage on both Macs; Claude returned live usage on this Mac, while the MacBook reported its existing OAuth credential expired and needs `claude login`. No credential material was copied or modified.

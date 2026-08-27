@@ -539,6 +539,11 @@ extension UsageMenuCardView.Model {
         input: Input,
         snapshot: UsageSnapshot) -> (primary: String, secondary: String, tertiary: String, showsTertiary: Bool)
     {
+        // Kimi's primary snapshot slot is the 7-day quota and its secondary slot is the 5-hour quota.
+        // Keep the displayed vocabulary uniform even though the provider's API slot names differ.
+        if input.provider == .kimi {
+            return (L("Weekly"), L("Session"), input.metadata.opusLabel.map(L) ?? L("Sonnet"), false)
+        }
         if input.provider == .factory, snapshot.tertiary != nil {
             return (L("5-hour"), L("Weekly"), L("Monthly"), true)
         }
