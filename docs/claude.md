@@ -60,6 +60,17 @@ Admin API key setup:
 - The Debug pane can force OAuth / Web / CLI.
 - Web extras are internal-only (not exposed in the Providers pane).
 
+### Known login quirk
+- Claude authentication is local to each Mac. A successful Claude login on one machine does not refresh or
+  transfer the credential on another machine.
+- CodexBar reads Claude Code's local OAuth state but does not launch Claude Code to renew an expired token. When the
+  provider shows `unavailable`, verify the machine-local login with `claude auth status` and repair it interactively:
+  `claude auth login --claudeai`.
+- Choose the Claude subscription/Claude.ai flow, not Anthropic Console or API-key billing. After the browser login,
+  refresh or restart CodexBar. A `loggedIn: true` result can be stale; CodexBar's live usage probe is authoritative.
+- Claude credentials must not be copied between machines. Claude Code can also rotate its Keychain item or invalidate
+  an OAuth token, so “persistent” means stored and reused locally, not permanently valid.
+
 ## OAuth API (preferred)
 - Credentials:
   - CodexBar OAuth cache when available.
