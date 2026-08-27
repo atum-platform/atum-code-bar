@@ -40,8 +40,8 @@ public enum KimiProviderDescriptor {
             metadata: ProviderMetadata(
                 id: .kimi,
                 displayName: "Kimi Code",
-                sessionLabel: "5-hour",
-                weeklyLabel: "7-day",
+                sessionLabel: "Session",
+                weeklyLabel: "Weekly",
                 opusLabel: nil,
                 supportsOpus: false,
                 supportsCredits: false,

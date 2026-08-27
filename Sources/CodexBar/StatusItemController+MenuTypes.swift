@@ -88,8 +88,8 @@ struct OverviewMenuCardRowView: View {
 
     func visibleMetrics(for model: UsageMenuCardView.Model) -> [UsageMenuCardView.Model.Metric] {
         let orderedMetrics = model.metrics.enumerated().sorted { lhs, rhs in
-            let lhsRank = Self.metricWindowRank(lhs.element)
-            let rhsRank = Self.metricWindowRank(rhs.element)
+            let lhsRank = Self.metricWindowRank(provider: model.provider, metric: lhs.element)
+            let rhsRank = Self.metricWindowRank(provider: model.provider, metric: rhs.element)
             return lhsRank == rhsRank ? lhs.offset < rhs.offset : lhsRank < rhsRank
         }.map(\.element)
         guard model.provider == .doubao,
@@ -104,13 +104,17 @@ struct OverviewMenuCardRowView: View {
         return Array(codingMetrics) + [firstAgentMetric]
     }
 
-    private static func metricWindowRank(_ metric: UsageMenuCardView.Model.Metric) -> Int {
-        // Kimi's primary slot is its 7-day quota; its secondary slot is the 5-hour quota.
-        if metric.id == "primary", metric.title.localizedCaseInsensitiveContains("day") {
-            return 0
-        }
-        if metric.id == "secondary", metric.title.localizedCaseInsensitiveContains("hour") {
-            return 1
+    private static func metricWindowRank(
+        provider: UsageProvider,
+        metric: UsageMenuCardView.Model.Metric) -> Int
+    {
+        // Kimi's primary slot is its weekly quota; its secondary slot is its session quota.
+        if provider == .kimi {
+            switch metric.id {
+            case "primary": return 0
+            case "secondary": return 1
+            default: break
+            }
         }
         switch metric.id {
         case "secondary": return 0 // weekly
