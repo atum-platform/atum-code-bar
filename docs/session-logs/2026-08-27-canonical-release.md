@@ -56,3 +56,10 @@ artifact passes packaging and dual-machine usage probes.
 - The local mini cannot run package tests because it has Swift 5.10 while this
   package requires Swift 6.2; compatible verification remains on the MacBook
   build host.
+- Built the corrected arm64 app on the MacBook; source compilation and deep
+  code-sign verification passed. The package launch smoke check was limited by
+  its intentionally unreadable isolated build-root probe, not by a launch or
+  signing failure.
+- Installed the corrected bundle on both Macs with macOS metadata-preserving
+  copy; both running app main binaries match SHA-256
+  `d31befe7cb8896615a4cc2c0addd108266d71ff6d1e497b4b0e26467dda868ac`.
