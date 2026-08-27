@@ -63,3 +63,9 @@ artifact passes packaging and dual-machine usage probes.
 - Installed the corrected bundle on both Macs with macOS metadata-preserving
   copy; both running app main binaries match SHA-256
   `d31befe7cb8896615a4cc2c0addd108266d71ff6d1e497b4b0e26467dda868ac`.
+- Cleanup completed after verification: consolidated the canonical branch into
+  the primary local checkout, removed obsolete linked worktrees and build/temp
+  copies, removed old rollback/application bundles on both Macs, deleted the
+  dirty MacBook recovery checkout, and deleted obsolete origin branches. Only
+  `main` and `feat/canonical-release-0552` remain on `origin`. Provider
+  credentials and application data were intentionally left untouched.
