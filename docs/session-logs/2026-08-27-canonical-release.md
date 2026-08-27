@@ -47,6 +47,6 @@ artifact passes packaging and dual-machine usage probes.
 - Kimi now uses the same displayed vocabulary as every other provider: “Weekly” first and “Session” second; its 7-day/5-hour API semantics remain internal to ordering and pacing.
 - Corrected Kimi’s menu-card slot-to-label mapping so the weekly primary slot is visibly “Weekly” and the 5-hour secondary slot is visibly “Session”.
 - Updated the Kimi menu-card regression expectation for the label-only change; the underlying provider model order remains source-compatible while Overview applies semantic ordering.
-- Packaged and installed the final exact 0.55.2/build 131 arm64 bundle on both Macs; both main binaries verified at SHA-256 `6237c3f331ba958c700ed90e005540f61be688ae82eb53c731bbd08bd4429df6` and deep code-sign verification passed.
+- Packaged and installed the final exact 0.55.2/build 131 arm64 bundle on both Macs; both main binaries verified at SHA-256 `8d2f91aaa1d4f48c2aef9d1619054de59ec097fb8ea546232e878d7da485baa5` and deep code-sign verification passed.
 - Post-install probes: Kimi returned live 7-day/5-hour usage on both Macs; Claude returned live usage on this Mac, while the MacBook reported its existing OAuth credential expired and needs `claude login`. No credential material was copied or modified.
 - Discovery follow-up: first-run detection also enables first-party providers with configured API, cookie, workspace, or token-account evidence, covering configured providers beyond the built-in CLI/app probes without persisting or exposing secret values.
