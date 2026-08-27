@@ -46,3 +46,5 @@ artifact passes packaging and dual-machine usage probes.
 - Follow-up: Overview ordering is semantic rather than slot-based for Kimi (7-day before 5-hour), and Claude scoped weekly lanes such as “Fable only” are prioritized over lower-priority extras when compact rows are capped.
 - Kimi labels now use the same compact vocabulary as its quota windows: “7-day” first and “5-hour” second; other providers continue to use “Weekly” and “Session”.
 - Updated the Kimi menu-card regression expectation for the label-only change; the underlying provider model order remains source-compatible while Overview applies semantic ordering.
+- Packaged and installed the exact 0.55.2/build 131 arm64 bundle on both Macs; both main binaries verified at SHA-256 `d85eded376f50ece3a06457039f3c90993176ecd710cb6b6d20047bb95e94059` and deep code-sign verification passed.
+- Post-install probes: Kimi returned live 7-day/5-hour usage on both Macs; Claude returned live usage on this Mac, while the MacBook reported its existing OAuth credential expired and needs `claude login`. No credential material was copied or modified.
