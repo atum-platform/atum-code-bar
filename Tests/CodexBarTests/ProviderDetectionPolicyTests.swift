@@ -13,7 +13,8 @@ struct ProviderDetectionPolicyTests {
             kimiConfigured: false,
             geminiCLIInstalled: true,
             geminiConfigured: false,
-            antigravityAvailable: false))
+            antigravityAvailable: false,
+            configuredProviders: []))
 
         #expect(enabled == [.codex, .claude])
     }
@@ -28,7 +29,8 @@ struct ProviderDetectionPolicyTests {
             kimiConfigured: false,
             geminiCLIInstalled: true,
             geminiConfigured: true,
-            antigravityAvailable: false))
+            antigravityAvailable: false,
+            configuredProviders: []))
 
         #expect(enabled == [.gemini])
     }
@@ -43,7 +45,8 @@ struct ProviderDetectionPolicyTests {
             kimiConfigured: true,
             geminiCLIInstalled: false,
             geminiConfigured: false,
-            antigravityAvailable: false))
+            antigravityAvailable: false,
+            configuredProviders: []))
 
         #expect(enabled == [.kimi])
     }
@@ -58,8 +61,25 @@ struct ProviderDetectionPolicyTests {
             kimiConfigured: false,
             geminiCLIInstalled: false,
             geminiConfigured: false,
-            antigravityAvailable: false))
+            antigravityAvailable: false,
+            configuredProviders: []))
 
         #expect(enabled == [.codex])
+    }
+
+    @Test
+    func `configured provider credentials are discovered generically`() {
+        let enabled = ProviderDetectionPolicy.enabledProviders(signals: .init(
+            codexCLIInstalled: false,
+            claudeCLIInstalled: false,
+            claudeDesktopInstalled: false,
+            kimiCLIInstalled: false,
+            kimiConfigured: false,
+            geminiCLIInstalled: false,
+            geminiConfigured: false,
+            antigravityAvailable: false,
+            configuredProviders: [.openrouter]))
+
+        #expect(enabled == [.openrouter])
     }
 }

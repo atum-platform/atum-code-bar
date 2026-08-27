@@ -12,6 +12,7 @@ enum ProviderDetectionPolicy {
         let geminiCLIInstalled: Bool
         let geminiConfigured: Bool
         let antigravityAvailable: Bool
+        let configuredProviders: Set<UsageProvider>
     }
 
     static func enabledProviders(signals: Signals) -> Set<UsageProvider> {
@@ -32,6 +33,7 @@ enum ProviderDetectionPolicy {
         if signals.antigravityAvailable {
             enabled.insert(.antigravity)
         }
+        enabled.formUnion(signals.configuredProviders)
 
         // Keep the historical Codex default when no usable provider source is found.
         if enabled.isEmpty {
@@ -67,6 +69,15 @@ extension SettingsStore {
         let antigravityRunning = await AntigravityStatusProbe.isRunning()
         let antigravityLoggedIn = FileManager.default.fileExists(
             atPath: AntigravityOAuthCredentialsStore().fileURL.path)
+        let configuredProviders = Set(UsageProvider.allCases.filter { provider in
+            guard let config = self.config.providerConfig(for: provider.instanceID) else { return false }
+            return config.apiKey?.isEmpty == false ||
+                config.secretKey?.isEmpty == false ||
+                config.cookieHeader?.isEmpty == false ||
+                config.workspaceID?.isEmpty == false ||
+                config.enterpriseHost?.isEmpty == false ||
+                config.tokenAccounts?.accounts.isEmpty == false
+        })
         let logger = CodexBarLog.logger(LogCategories.providerDetection)
 
         let enabledProviders = ProviderDetectionPolicy.enabledProviders(signals: .init(
@@ -77,7 +88,8 @@ extension SettingsStore {
             kimiConfigured: kimiConfigured,
             geminiCLIInstalled: geminiCLIInstalled,
             geminiConfigured: geminiConfigured,
-            antigravityAvailable: antigravityRunning || antigravityLoggedIn))
+            antigravityAvailable: antigravityRunning || antigravityLoggedIn,
+            configuredProviders: configuredProviders))
 
         logger.info(
             "Provider detection results",
@@ -91,6 +103,7 @@ extension SettingsStore {
                 "geminiConfigured": geminiConfigured ? "1" : "0",
                 "antigravityRunning": antigravityRunning ? "1" : "0",
                 "antigravityLoggedIn": antigravityLoggedIn ? "1" : "0",
+                "configuredProviders": configuredProviders.map(\.rawValue).sorted().joined(separator: ","),
             ])
         logger.info(
             "Provider detection enablement",

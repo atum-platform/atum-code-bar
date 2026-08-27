@@ -48,3 +48,4 @@ artifact passes packaging and dual-machine usage probes.
 - Updated the Kimi menu-card regression expectation for the label-only change; the underlying provider model order remains source-compatible while Overview applies semantic ordering.
 - Packaged and installed the exact 0.55.2/build 131 arm64 bundle on both Macs; both main binaries verified at SHA-256 `d85eded376f50ece3a06457039f3c90993176ecd710cb6b6d20047bb95e94059` and deep code-sign verification passed.
 - Post-install probes: Kimi returned live 7-day/5-hour usage on both Macs; Claude returned live usage on this Mac, while the MacBook reported its existing OAuth credential expired and needs `claude login`. No credential material was copied or modified.
+- Discovery follow-up: first-run detection also enables first-party providers with configured API, cookie, workspace, or token-account evidence, covering configured providers beyond the built-in CLI/app probes without persisting or exposing secret values.
