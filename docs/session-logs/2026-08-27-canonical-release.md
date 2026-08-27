@@ -50,3 +50,9 @@ artifact passes packaging and dual-machine usage probes.
 - Packaged and installed the final exact 0.55.2/build 131 arm64 bundle on both Macs; both main binaries verified at SHA-256 `8d2f91aaa1d4f48c2aef9d1619054de59ec097fb8ea546232e878d7da485baa5` and deep code-sign verification passed.
 - Post-install probes: Kimi returned live 7-day/5-hour usage on both Macs; Claude returned live usage on this Mac, while the MacBook reported its existing OAuth credential expired and needs `claude login`. No credential material was copied or modified.
 - Discovery follow-up: first-run detection also enables first-party providers with configured API, cookie, workspace, or token-account evidence, covering configured providers beyond the built-in CLI/app probes without persisting or exposing secret values.
+- Follow-up correction: Kimi metric construction now labels the primary weekly
+  quota `Weekly` and secondary short quota `Session` at the model layer, so
+  both full cards and compact Overview consistently use weekly → session order.
+- The local mini cannot run package tests because it has Swift 5.10 while this
+  package requires Swift 6.2; compatible verification remains on the MacBook
+  build host.

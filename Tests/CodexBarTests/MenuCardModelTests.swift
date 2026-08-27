@@ -138,9 +138,9 @@ struct ProviderInlineDashboardModelTests {
             hidePersonalInfo: false,
             now: now))
 
-        #expect(model.metrics.map(\.id) == ["secondary", "primary"])
-        #expect(model.metrics.map(\.title) == ["Session", "Weekly"])
-        #expect(model.metrics.map(\.detailLeftText) == ["11% in reserve", "25% in reserve"])
+        #expect(model.metrics.map(\.id) == ["primary", "secondary"])
+        #expect(model.metrics.map(\.title) == ["Weekly", "Session"])
+        #expect(model.metrics.map(\.detailLeftText) == ["25% in reserve", "11% in reserve"])
         #expect(model.metrics.map(\.detailRightText) == ["Lasts until reset", "Lasts until reset"])
         #expect(model.metrics.allSatisfy { $0.pacePercent != nil })
     }

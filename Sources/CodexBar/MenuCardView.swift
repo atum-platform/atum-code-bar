@@ -1418,7 +1418,10 @@ extension UsageMenuCardView.Model {
         let displayedUsedPercent = bindingProjection?.usedPercent ?? primary.usedPercent
         return Metric(
             id: "primary",
-            title: title ?? L(input.metadata.sessionLabel),
+            // Kimi's API exposes its weekly quota in the generic primary slot.
+            // Keep the model's visible vocabulary semantic, rather than inheriting
+            // the provider-default slot label.
+            title: title ?? L(input.provider == .kimi ? "Weekly" : input.metadata.sessionLabel),
             percent: Self.clamped(input.usageBarsShowUsed ? displayedUsedPercent : 100 - displayedUsedPercent),
             percentStyle: percentStyle,
             statusText: presentation.statusText,
@@ -1547,7 +1550,8 @@ extension UsageMenuCardView.Model {
         }
         return Metric(
             id: "secondary",
-            title: title ?? L(input.metadata.weeklyLabel),
+            // Kimi's secondary API slot is the short session window.
+            title: title ?? L(input.provider == .kimi ? "Session" : input.metadata.weeklyLabel),
             percent: Self.clamped(input.usageBarsShowUsed ? weekly.usedPercent : weekly.remainingPercent),
             percentStyle: percentStyle,
             statusText: nil,
