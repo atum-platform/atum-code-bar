@@ -326,6 +326,19 @@ final class CLILocalHTTPServer: @unchecked Sendable {
     }
 
     func run(onListening: @Sendable () -> Void = {}) async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            Thread.detachNewThread {
+                do {
+                    try self.runBlocking(onListening: onListening)
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    private func runBlocking(onListening: @Sendable () -> Void) throws {
         ignoreSIGPIPE()
 
         #if canImport(Darwin)
