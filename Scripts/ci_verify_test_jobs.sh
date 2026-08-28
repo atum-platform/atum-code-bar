@@ -28,8 +28,7 @@ case "${macos_tests_required}:${macos_tests_deferred}:${macos_test_result}" in
     printf 'Lint passed; macOS Swift tests skipped by the macOS test gate.\n'
     ;;
   true:true:skipped)
-    printf 'macOS Swift tests are required but deferred; aggregate CI remains incomplete\n' >&2
-    exit 1
+    printf 'Lint passed; draft PR defers required macOS Swift tests until ready.\n'
     ;;
   *)
     printf 'macOS test gate/result mismatch: required=%s deferred=%s result=%s\n' \

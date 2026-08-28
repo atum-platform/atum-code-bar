@@ -200,6 +200,7 @@ verify="${ROOT_DIR}/Scripts/ci_verify_test_jobs.sh"
 "$verify" success success true success false false skipped >/dev/null
 "$verify" success success false skipped false true success >/dev/null
 "$verify" success success false skipped false false skipped >/dev/null
+"$verify" success success true skipped true true success >/dev/null
 
 assert_verify_fails() {
   if "$verify" "$@" >/dev/null 2>&1; then
@@ -209,7 +210,6 @@ assert_verify_fails() {
 }
 
 assert_verify_fails success success true skipped false true success
-assert_verify_fails success success true skipped true true success
 assert_verify_fails success success false skipped true true success
 assert_verify_fails success success true success true true success
 assert_verify_fails success success false success false true success

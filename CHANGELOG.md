@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- CI adopts `atum-platform/atum-code` lifecycle policy `ci-policy/v1`: portable
+  checks use GitHub-hosted runners, superseded PR work cancels per workflow,
+  expensive package/build lanes wait for ready PRs, and pinned Actions receive
+  weekly Dependabot updates. The aggregate check accepts the intentional draft
+  skip and requires the native lane once the PR is ready. Release workflows are
+  unchanged.
+- Linux timing assertions retain their semantic bounds while allowing the
+  contention observed on hosted x64 and ARM64 full-suite runs.
+- Linux CI explicitly disables Swift Testing parallelism so socket deadline
+  tests retain executor capacity on hosted runners.
+
+### Fixed
+- CLI serve keeps its blocking accept loop and bounded pre-auth socket reads on
+  dedicated threads instead of Swift's cooperative executor, so trickling
+  clients cannot starve the total-read deadline or hold every connection slot
+  on Linux; the listening callback remains sendable across that thread boundary.
+
 ## 0.49.0 — 2026-08-09
 
 ### Added

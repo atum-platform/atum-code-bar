@@ -32,8 +32,9 @@ struct CLIHooksWatchSleepLinuxTests {
         let elapsedSeconds = Double(DispatchTime.now().uptimeNanoseconds - start.uptimeNanoseconds) / 1e9
 
         // The 0.3s signal must interrupt the 10s interval promptly; allow headroom for loaded
-        // CI runners (observed 2.02s on x64 under contention).
-        #expect(elapsedSeconds < 5)
+        // CI runners (observed 6.76s on hosted x64 under full-suite contention).
+        // The bound remains below the 10s interval, so this still proves interruption.
+        #expect(elapsedSeconds < 9)
     }
 
     @Test
