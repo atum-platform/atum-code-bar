@@ -325,7 +325,7 @@ final class CLILocalHTTPServer: @unchecked Sendable {
         self.stateLock.unlock()
     }
 
-    func run(onListening: @Sendable () -> Void = {}) async throws {
+    func run(onListening: @escaping @Sendable () -> Void = {}) async throws {
         try await withCheckedThrowingContinuation { continuation in
             Thread.detachNewThread {
                 do {
