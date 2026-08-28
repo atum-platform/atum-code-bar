@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- CI adopts `atum-platform/atum-code` lifecycle policy `ci-policy/v1`: portable
+  checks use GitHub-hosted runners, superseded PR work cancels per workflow,
+  expensive package/build lanes wait for ready PRs, and pinned Actions receive
+  weekly Dependabot updates. The aggregate check accepts the intentional draft
+  skip and requires the native lane once the PR is ready. Release workflows are
+  unchanged.
+
 ## 0.49.0 — 2026-08-09
 
 ### Added

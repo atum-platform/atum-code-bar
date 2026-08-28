@@ -7,8 +7,8 @@ on:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   SWIFT_VERSION: 6.3.3
@@ -18,7 +18,7 @@ env:
 jobs:
   changes:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: [self-hosted, portable-ci, local-ci]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       macos-tests: ${{ steps.macos-tests.outputs.macos-tests }}
@@ -93,7 +93,7 @@ jobs:
 
   lint:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: [self-hosted, Linux, X64, container-ci, local-ci]
+    runs-on: ubuntu-24.04
     container: swift@sha256:69bf1f0281e13d82c9e49d67c2dd1dcc8c00bad738c860f4323d7078787ec8ea # swift:6.3.3-noble
     timeout-minutes: 10
     steps:
@@ -223,7 +223,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   lint-build-test:
-    runs-on: [self-hosted, portable-ci, local-ci]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     needs:
       - changes
@@ -454,6 +454,7 @@ jobs:
           --triple "$SWIFT_STATIC_LINUX_SDK_TRIPLE"
 
   build-linux-cli:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     timeout-minutes: 20
     strategy:
       fail-fast: false
