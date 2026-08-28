@@ -11,8 +11,8 @@
   unchanged.
 - Linux timing assertions retain their semantic bounds while allowing the
   contention observed on hosted x64 and ARM64 full-suite runs.
-- Linux CI runs the Swift suite without the package manager's extra parallel
-  mode so socket deadline tests retain executor capacity on hosted runners.
+- Linux CI explicitly disables Swift Testing parallelism so socket deadline
+  tests retain executor capacity on hosted runners.
 
 ## 0.49.0 — 2026-08-09
 
