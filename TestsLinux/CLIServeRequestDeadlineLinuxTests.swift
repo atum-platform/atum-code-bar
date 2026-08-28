@@ -14,8 +14,8 @@ import Testing
 /// `readRequest` bounds each `recv` but not the request as a whole.
 ///
 /// A client that keeps trickling bytes just inside the per-read window never trips
-/// that timeout, so it holds its connection — and the cooperative-executor thread
-/// serving it — for as long as it likes. Both the Host allowlist and the bearer
+/// that timeout, so it holds its connection — and the bounded read thread serving
+/// it — for as long as it likes. Both the Host allowlist and the bearer
 /// token are checked only after the head has been read, so a few such clients
 /// exhaust `maximumConnections` entirely pre-auth.
 ///
@@ -129,7 +129,7 @@ struct CLIServeRequestDeadlineLinuxTests {
     @Test
     func `trickling clients cannot hold connection slots indefinitely`() async throws {
         let connectionCap = 3
-        // A short injected deadline keeps this suite from occupying executor threads
+        // A short injected deadline keeps this suite from occupying read threads
         // for the full production budget, which would stall unrelated suites running
         // alongside it.
         let deadlineMilliseconds: Int64 = 1500
@@ -170,8 +170,8 @@ struct CLIServeRequestDeadlineLinuxTests {
         let started = DispatchTime.now().uptimeNanoseconds
         // Well beyond the injected deadline, but far short of how long the trickling
         // clients would hold their slots without one.
-        // Full hosted suites can starve this cooperative-executor probe even
-        // after the 1.5s server deadline has released a slot.
+        // Leave enough room for a hosted runner to schedule the retry after the
+        // 1.5s server deadline has released a slot.
         let budgetSeconds = 25.0
         var servedAfterSeconds: Double?
         while Double(DispatchTime.now().uptimeNanoseconds &- started) / 1e9 < budgetSeconds {

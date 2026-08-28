@@ -14,6 +14,11 @@
 - Linux CI explicitly disables Swift Testing parallelism so socket deadline
   tests retain executor capacity on hosted runners.
 
+### Fixed
+- CLI serve performs bounded pre-auth socket reads on dedicated threads instead
+  of blocking Swift's cooperative executor, so trickling clients cannot starve
+  the total-read deadline or hold every connection slot on Linux.
+
 ## 0.49.0 — 2026-08-09
 
 ### Added

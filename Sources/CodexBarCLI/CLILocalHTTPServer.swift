@@ -12,8 +12,8 @@ private let requestReadTimeoutMilliseconds: Int32 = 5000
 ///
 /// `requestReadTimeoutMilliseconds` only bounds a single `recv`, so a client that
 /// sends one byte just inside that window can hold its connection — and the
-/// cooperative-executor thread serving it — indefinitely. Both the Host allowlist
-/// and the bearer-token check run only after the head has been read, so without an
+/// dedicated read thread serving it — indefinitely. Both the Host allowlist and
+/// the bearer-token check run only after the head has been read, so without an
 /// overall bound a few such clients exhaust `maximumConnections` pre-auth.
 private let requestTotalReadTimeoutMilliseconds: Int64 = 10000
 
@@ -28,7 +28,7 @@ enum CLILocalHTTPAllowedHosts: Equatable, Sendable {
     case any
 }
 
-struct CLILocalHTTPRequest {
+struct CLILocalHTTPRequest: Sendable {
     let method: String
     let target: String
     let host: String
@@ -287,7 +287,7 @@ final class CLILocalHTTPServer: @unchecked Sendable {
     private let allowedHosts: CLILocalHTTPAllowedHosts
     private let connectionGate: CLILocalHTTPConnectionGate
     /// Overall budget for reading one request head. Injectable so tests can use a
-    /// short deadline instead of occupying an executor thread for the production one.
+    /// short deadline instead of occupying a read thread for the production one.
     private let totalReadTimeout: Int64
     private let handler: Handler
     private let stateLock = NSLock()
@@ -411,15 +411,13 @@ final class CLILocalHTTPServer: @unchecked Sendable {
             let handler = self.handler
             let allowedHosts = self.allowedHosts
             let connectionGate = self.connectionGate
-            Task {
-                defer {
-                    closeSocket(clientFD)
-                    connectionGate.release()
-                }
-                await handleClient(
+            let totalReadTimeout = self.totalReadTimeout
+            Thread.detachNewThread {
+                readAndDispatchClient(
                     clientFD,
                     allowedHosts: allowedHosts,
-                    totalReadTimeoutMilliseconds: self.totalReadTimeout,
+                    totalReadTimeoutMilliseconds: totalReadTimeout,
+                    connectionGate: connectionGate,
                     handler: handler)
             }
         }
@@ -462,11 +460,12 @@ final class CLILocalHTTPServer: @unchecked Sendable {
     }
 }
 
-private func handleClient(
+private func readAndDispatchClient(
     _ clientFD: Int32,
     allowedHosts: CLILocalHTTPAllowedHosts,
     totalReadTimeoutMilliseconds: Int64,
-    handler: @Sendable (CLILocalHTTPRequest) async -> CLILocalHTTPResponse) async
+    connectionGate: CLILocalHTTPConnectionGate,
+    handler: @escaping @Sendable (CLILocalHTTPRequest) async -> CLILocalHTTPResponse)
 {
     let request: CLILocalHTTPRequest
     switch readRequest(
@@ -477,6 +476,10 @@ private func handleClient(
     case let .success(parsedRequest):
         request = parsedRequest
     case .failure(.disallowedHost):
+        defer {
+            closeSocket(clientFD)
+            connectionGate.release()
+        }
         sendResponse(
             CLILocalHTTPResponse(
                 status: .forbidden,
@@ -485,6 +488,10 @@ private func handleClient(
             to: clientFD)
         return
     case .failure:
+        defer {
+            closeSocket(clientFD)
+            connectionGate.release()
+        }
         sendResponse(
             CLILocalHTTPResponse(
                 status: .badRequest,
@@ -494,8 +501,14 @@ private func handleClient(
         return
     }
 
-    let response = await handler(request)
-    sendResponse(response, to: clientFD)
+    Task {
+        defer {
+            closeSocket(clientFD)
+            connectionGate.release()
+        }
+        let response = await handler(request)
+        sendResponse(response, to: clientFD)
+    }
 }
 
 private func readRequest(
