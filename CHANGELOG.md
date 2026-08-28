@@ -9,6 +9,8 @@
   weekly Dependabot updates. The aggregate check accepts the intentional draft
   skip and requires the native lane once the PR is ready. Release workflows are
   unchanged.
+- Linux timing assertions retain their semantic bounds while allowing the
+  contention observed on hosted x64 and ARM64 full-suite runs.
 
 ## 0.49.0 — 2026-08-09
 

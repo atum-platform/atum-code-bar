@@ -170,7 +170,9 @@ struct CLIServeRequestDeadlineLinuxTests {
         let started = DispatchTime.now().uptimeNanoseconds
         // Well beyond the injected deadline, but far short of how long the trickling
         // clients would hold their slots without one.
-        let budgetSeconds = 12.0
+        // Full hosted suites can starve this cooperative-executor probe even
+        // after the 1.5s server deadline has released a slot.
+        let budgetSeconds = 25.0
         var servedAfterSeconds: Double?
         while Double(DispatchTime.now().uptimeNanoseconds &- started) / 1e9 < budgetSeconds {
             if Self.probeHealth(port: port, timeoutSeconds: 2) != nil {
