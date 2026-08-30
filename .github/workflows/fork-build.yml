@@ -11,7 +11,12 @@ concurrency:
 
 jobs:
   focused-test-and-package:
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    # Internal PRs already run the full CI workflow. This lane exists for
+    # external fork PRs, whose untrusted code is intentionally excluded there,
+    # plus explicit operator-triggered package checks.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.draft == false && github.event.pull_request.head.repo.fork == true)
     runs-on: macos-26
     timeout-minutes: 45
     steps:
